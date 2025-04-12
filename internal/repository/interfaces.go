@@ -19,4 +19,6 @@ type TokenRepository interface {
 	Create(ctx context.Context, token *entity.Token) error
 	FindByToken(ctx context.Context, token string, tokenType entity.TokenType) (*entity.Token, error)
 	Delete(ctx context.Context, id uint) error
+	FindByUserID(ctx context.Context, userID uint) ([]*entity.Token, error)
+	Exists(ctx context.Context, token string, tokenType entity.TokenType) (bool, error)
 }

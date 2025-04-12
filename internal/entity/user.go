@@ -7,8 +7,17 @@ type User struct {
 	Email           string    `json:"email"`
 	Password        string    `json:"-"`
 	Name            string    `json:"name"`
-	GoogleID        string    `json:"-"`
+	GoogleID        *string   `json:"-"`
 	IsEmailVerified bool      `json:"is_email_verified"`
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+func NewGoogleUser(email, name, googleID string, verified bool) *User {
+	return &User{
+		Email:           email,
+		Name:            name,
+		GoogleID:        &googleID,
+		IsEmailVerified: verified,
+	}
 }

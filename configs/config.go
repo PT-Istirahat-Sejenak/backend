@@ -58,7 +58,7 @@ func LoadConfig() (*Config, error) {
 
 	return &Config{
 		Server: ServerConfig{
-			Port: os.Getenv("SERVER_PORT"),
+			Port: os.Getenv("PORT"),
 		},
 		Database: DatabaseConfig{
 			Host:     os.Getenv("DB_HOST"),

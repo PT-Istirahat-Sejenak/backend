@@ -1,10 +1,13 @@
 package entity
 
+import "time"
+
 type TokenType string
 
 const (
 	ResetPassword TokenType = "reset_password"
 	EmailVerify   TokenType = "email_verify"
+	Blacklisted   TokenType = "black_list"
 )
 
 type Token struct {
@@ -12,6 +15,6 @@ type Token struct {
 	UserID    uint      `json:"user_id"`
 	Token     string    `json:"token"`
 	Type      TokenType `json:"type"`
-	ExpiredAt string    `json:"expired_at"`
-	CreatedAt string    `json:"created_at"`
+	ExpiresAt time.Time `json:"expired_at"`
+	CreatedAt time.Time `json:"created_at"`
 }
