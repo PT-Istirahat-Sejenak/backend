@@ -49,30 +49,32 @@ func (e *EmailService) SendEmail(to []string, subject, body string) error {
 func (e *EmailService) SendResetPasswordEmail(to string, resetCode string) error {
 	subject := "Reset Your Password"
 	body := fmt.Sprintf(`
-		<html>
-			<body>
-				<h1>Password Reset</h1>
-				<p>You have requested to reset your password.</p>
-				<p>Your verification code is: <strong>%s</strong></p>
-				<p>If you did not request a password reset, please ignore this email.</p>
-			</body>
-		</html>
-	`, resetCode)
+        <html>
+            <body>
+                <h1>Password Reset</h1>
+                <p>You have requested to reset your password.</p>
+                <p>Your 6-digit OTP is: <strong>%s</strong></p>
+                <p>This code will expire in 1 hour.</p>
+                <p>If you did not request a password reset, please ignore this email.</p>
+            </body>
+        </html>
+    `, resetCode)
 
 	return e.SendEmail([]string{to}, subject, body)
 }
 
 func (e *EmailService) SendVerificationEmail(to string, verificationCode string) error {
-	subject := "Email Your Verification"
+	subject := "Verify Your Email"
 	body := fmt.Sprintf(`
-		<html>
-			<body>
-				<h1>Email Verification</h1>
-				<p>Thank you for registering. Please verify your email address to activate your account.</p>
-				<p>Your verification code is: <strong>%s</strong></p>
-			</body>
-		</html>
-	`, verificationCode)
+        <html>
+            <body>
+                <h1>Email Verification</h1>
+                <p>Thank you for registering. Please verify your email address to activate your account.</p>
+                <p>Your 6-digit OTP is: <strong>%s</strong></p>
+                <p>This code will expire in 24 hours.</p>
+            </body>
+        </html>
+    `, verificationCode)
 
 	return e.SendEmail([]string{to}, subject, body)
 }

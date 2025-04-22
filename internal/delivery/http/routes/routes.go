@@ -12,6 +12,7 @@ func SetupRoutes(
 	router *mux.Router,
 	authHandler *handler.AuthHandler,
 	authMiddleware *middleware.AuthMiddleware,
+	profileHandler *handler.ProfileHandler,
 ) {
 	// Public routes
 	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
@@ -30,5 +31,7 @@ func SetupRoutes(
 	}).Methods("GET")
 	protected.HandleFunc("/auth/logout", authHandler.Logout).Methods("POST")
 
-	
+	// profile routes
+	protected.HandleFunc("/user/profile", profileHandler.GetProfile).Methods("GET")
+	protected.HandleFunc("/user/profile/photo", profileHandler.UpdateProfilePhoto).Methods("POST")
 }

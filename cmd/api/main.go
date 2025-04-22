@@ -8,6 +8,7 @@ import (
 	"backend/internal/infrastructure/database"
 	"backend/internal/infrastructure/email"
 	"backend/internal/infrastructure/oauth"
+	"backend/internal/infrastructure/storage"
 	"backend/internal/repository/postgres"
 	"backend/internal/usecase"
 	"backend/pkg/jwt"
@@ -16,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -62,16 +64,41 @@ func main() {
 		config.Google.RedirectURL,
 	)
 
+	var fileStorage storage.FileStorage
+
+	if config.Storage.Type == "s3" {
+		fileStorage, err = storage.NewS3Storage(
+			config.Storage.S3AccountID,
+			config.Storage.S3AccessKey,
+			config.Storage.S3SecretKey,
+			config.Storage.S3BucketName,
+			config.Storage.S3Region,
+			config.Storage.S3BaseURL,
+		)
+	} else {
+		// Default to local storage
+		fileStorage, err = storage.NewLocalStorage(
+			config.Storage.LocalBasePath,
+			config.Storage.LocalBaseURL,
+		)
+	}
+
+	if err != nil {
+		log.Fatalf("Failed to initialize storage: %v", err)
+	}
+
 	// Initialize use cases
 	authUseCase := usecase.NewAuthUseCase(userRepo, tokenRepo, jwtService, emailService, googleOauth)
+	profileUseCase := usecase.NewProfileUseCase(userRepo, fileStorage)
 
 	// Initialize HTTP handlers
 	authHandler := handler.NewAuthHandler(authUseCase, jwtService, googleOauth)
 	authMiddleware := middleware.NewAuthMiddleware(jwtService, tokenRepo)
+	profileHandler := handler.NewProfileHandler(profileUseCase)
 
 	// Initialize router
 	router := mux.NewRouter()
-	routes.SetupRoutes(router, authHandler, authMiddleware)
+	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler)
 
 	// Configure HTTP server
 	server := &http.Server{
@@ -105,6 +132,19 @@ func main() {
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
+
+	// Jika menggunakan local storage, tambahkan route untuk static files
+if config.Storage.Type == "local" {
+	// Buat direktori uploads jika belum ada
+	uploadsDir := filepath.Join(".", "uploads")
+	if err := os.MkdirAll(uploadsDir, 0755); err != nil {
+		log.Fatalf("Failed to create uploads directory: %v", err)
+	}
+	
+	// Serve static files dari direktori uploads
+	fs := http.FileServer(http.Dir(uploadsDir))
+	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", fs))
+}
 
 	log.Println("Server exited properly")
 }

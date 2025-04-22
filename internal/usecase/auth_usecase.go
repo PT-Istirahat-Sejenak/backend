@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"time"
 )
 
@@ -48,6 +49,20 @@ func (a *authUseCase) generateRandomToken(length int) (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
+func (a *authUseCase) generateOTP(length int) (string, error) {
+	const digits = "0123456789"
+	b := make([]byte, length)
+	for i := range b {
+		randomIndex, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = digits[randomIndex.Int64()]
+	}
+
+	return string(b), nil
+}
+
 // Register implements AuhtUseCase.
 func (a *authUseCase) Register(ctx context.Context, email, password, name string) (*entity.User, error) {
 	existingUser, err := a.userRepo.FindByEmail(ctx, email)
@@ -78,7 +93,7 @@ func (a *authUseCase) Register(ctx context.Context, email, password, name string
 	}
 
 	// Generate verification token
-	verificationCode, err := a.generateRandomToken(16)
+	verificationCode, err := a.generateOTP(6)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +251,7 @@ func (a *authUseCase) RequestPasswordReset(ctx context.Context, email string) er
 	}
 
 	// Generate reset password token
-	resetCode, err := a.generateRandomToken(8)
+	resetCode, err := a.generateOTP(6)
 	if err != nil {
 		return err
 	}

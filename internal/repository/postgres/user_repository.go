@@ -219,3 +219,16 @@ func (r *UserRepository) VerifyEmail(ctx context.Context, userID uint) error {
 
 	return err
 }
+
+func (r *UserRepository) UpdateProfilePhoto(ctx context.Context, userID uint, photoURL string) error {
+	query := `
+		UPDATE users
+		SET profile_photo = $1, updated_at = $2
+		WHERE id = $3
+	`
+
+	now := time.Now()
+
+	_, err := r.db.ExecContext(ctx, query, photoURL, now, userID)
+	return err
+}

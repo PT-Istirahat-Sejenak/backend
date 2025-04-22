@@ -7,6 +7,7 @@ type User struct {
 	Email           string    `json:"email"`
 	Password        string    `json:"-"`
 	Name            string    `json:"name"`
+	ProfilePhoto    string    `json:"profile_photo"`
 	GoogleID        *string   `json:"-"`
 	IsEmailVerified bool      `json:"is_email_verified"`
 	CreatedAt       time.Time `json:"created_at"`

@@ -14,6 +14,7 @@ type Config struct {
 	JWT      JWTConfig
 	Email    EmailConfig
 	Google   GoogleOAuthConfig
+	Storage  StorageConfig
 }
 
 type ServerConfig struct {
@@ -48,10 +49,22 @@ type GoogleOAuthConfig struct {
 	RedirectURL  string
 }
 
+type StorageConfig struct {
+	Type          string // "local" atau "s3"
+	LocalBasePath string
+	LocalBaseURL  string
+	S3AccountID   string
+	S3AccessKey   string
+	S3SecretKey   string
+	S3BucketName  string
+	S3Region      string
+	S3BaseURL     string
+}
+
 func LoadConfig() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %w", err)
+		return nil, fmt.Errorf("error loading .env file: %v", err)
 	}
 
 	expTime, _ := strconv.Atoi(os.Getenv("JWT_EXPIRE_TIME"))
@@ -83,6 +96,17 @@ func LoadConfig() (*Config, error) {
 			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 			RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
+		},
+		Storage: StorageConfig{
+			Type:          os.Getenv("STORAGE_TYPE"),
+			LocalBasePath: os.Getenv("LOCAL_STORAGE_PATH"),
+			LocalBaseURL:  os.Getenv("LOCAL_STORAGE_URL"),
+			S3AccountID:   os.Getenv("S3_ACCOUNT_ID"),
+			S3AccessKey:   os.Getenv("S3_ACCESS_KEY"),
+			S3SecretKey:   os.Getenv("S3_SECRET_KEY"),
+			S3BucketName:  os.Getenv("S3_BUCKET_NAME"),
+			S3Region:      os.Getenv("S3_REGION"),
+			S3BaseURL:     os.Getenv("S3_BASE_URL"),
 		},
 	}, nil
 }
