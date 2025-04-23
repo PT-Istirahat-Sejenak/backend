@@ -26,9 +26,16 @@ func NewAuthHandler(authUseCase usecase.AuhtUseCase, jwtService *jwt.JWTService,
 }
 
 type RegisterRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	Name         string `json:"name"`
+	DateOfBirth  string `json:"date_of_birth"`
+	ProfilePhoto string `json:"profile_photo"`
+	PhoneNumber  string `json:"phone_number"`
+	Gender       string `json:"gender"`
+	Address      string `json:"address"`
+	BloodType    string `json:"blood_type"`
+	Rhesus       string `json:"rhesus"`
 }
 
 type LoginRequest struct {
@@ -70,12 +77,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if req.Email == "" || req.Password == "" || req.Name == "" {
-		http.Error(w, "Email, password, and name are required", http.StatusBadRequest)
+	if req.Email == "" || req.Password == "" || req.Name == "" || req.DateOfBirth == "" || req.ProfilePhoto == "" || req.PhoneNumber == "" || req.Gender == "" || req.Address == "" || req.BloodType == "" || req.Rhesus == "" {
+		http.Error(w, "Please provide all required fields", http.StatusBadRequest)
 		return
 	}
 
-	user, err := h.authUseCase.Register(r.Context(), req.Email, req.Password, req.Name)
+	user, err := h.authUseCase.Register(r.Context(), req.Email, req.Password, req.Name, req.DateOfBirth, req.ProfilePhoto, req.PhoneNumber, req.Gender, req.Address, req.BloodType, req.Rhesus)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

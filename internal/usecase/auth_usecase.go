@@ -9,7 +9,6 @@ import (
 	"backend/pkg/jwt"
 	"context"
 	"crypto/rand"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -41,13 +40,13 @@ func NewAuthUseCase(
 	}
 }
 
-func (a *authUseCase) generateRandomToken(length int) (string, error) {
-	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
-}
+// func (a *authUseCase) generateRandomToken(length int) (string, error) {
+// 	bytes := make([]byte, length)
+// 	if _, err := rand.Read(bytes); err != nil {
+// 		return "", err
+// 	}
+// 	return hex.EncodeToString(bytes), nil
+// }
 
 func (a *authUseCase) generateOTP(length int) (string, error) {
 	const digits = "0123456789"
@@ -64,7 +63,7 @@ func (a *authUseCase) generateOTP(length int) (string, error) {
 }
 
 // Register implements AuhtUseCase.
-func (a *authUseCase) Register(ctx context.Context, email, password, name string) (*entity.User, error) {
+func (a *authUseCase) Register(ctx context.Context, email, password, name, DateOfBirth, profilePhoto, phoneNumber, gender, address, bloodType, rhesus string) (*entity.User, error) {
 	existingUser, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, err
