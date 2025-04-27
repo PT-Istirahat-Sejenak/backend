@@ -19,7 +19,6 @@ type S3Storage struct {
 }
 
 func NewS3Storage(accountID, accessKeyID, accessKeySecret, bucketName, region, baseURL string) (*S3Storage, error) {
-	// Untuk Cloudflare R2, endpoint URL format-nya adalah: https://<account-id>.r2.cloudflarestorage.com
 	endpointURL := fmt.Sprintf("https://%s.r2.cloudflarestorage.com", accountID)
 
 	// Buat custom resolver untuk endpoint

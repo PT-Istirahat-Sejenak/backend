@@ -5,7 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 	"time"
 )
 
@@ -21,12 +20,10 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	query := `
-	INSERT INTO users (email, password, name, google_id, is_email_verified, created_at, updated_at) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	INSERT INTO users (email, password,role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id, created_at, updated_at) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	RETURNING id
 	`
-
-	log.Printf("create user repo dipanggil")
 
 	now := time.Now()
 	user.CreatedAt = now
@@ -42,14 +39,22 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	err := r.db.QueryRowContext(
 		ctx,
 		query,
-		user.Email,
-		user.Password,
-		user.Name,
-		googleID,
-		user.IsEmailVerified,
-		user.CreatedAt,
-		user.UpdatedAt,
+		user.Email,         // $1
+		user.Password,      // $2
+		user.Role,          // $3
+		user.Name,          // $4
+		user.DateOfBirth,   // $5
+		user.ProfilePhoto,  // $6
+		user.PhoneNumber,   // $7
+		user.Gender,        // $8
+		user.Address,       // $9
+		user.BloodType,     // $10
+		user.Rhesus,        // $11
+		googleID,           // $12
+		user.CreatedAt,     // $13
+		user.UpdatedAt,     // $14
 	).Scan(&user.ID)
+	
 
 	if err != nil {
 		return err
@@ -61,7 +66,7 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 // FindById implements repository.UserRepository.
 func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, error) {
 	query := `
-	SELECT id, email, password, name, google_id, is_email_verified, created_at, updated_at	
+	SELECT id, email, password, role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id,  created_at, updated_at	
 	FROM users
 	WHERE id = $1
 	`
@@ -71,9 +76,16 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, e
 		&user.ID,
 		&user.Email,
 		&user.Password,
+		&user.Role,
 		&user.Name,
+		&user.DateOfBirth,
+		&user.ProfilePhoto,
+		&user.Address,
+		&user.PhoneNumber,
+		&user.Gender,
+		&user.BloodType,
+		&user.Rhesus,
 		&user.GoogleID,
-		&user.IsEmailVerified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -91,7 +103,7 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, e
 // FindByEmail implements repository.UserRepository.
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
 	query := `
-	SELECT id, email, password, name, google_id, is_email_verified, created_at, updated_at
+	SELECT id, email, password, role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id, created_at, updated_at
 	FROM users
 	WHERE email = $1
 	`
@@ -103,9 +115,16 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity
 		&user.ID,
 		&user.Email,
 		&user.Password,
+		&user.Role,
 		&user.Name,
+		&user.DateOfBirth,
+		&user.ProfilePhoto,
+		&user.PhoneNumber,
+		&user.Gender,
+		&user.Address,
+		&user.BloodType,
+		&user.Rhesus,
 		&googleID,
-		&user.IsEmailVerified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -130,7 +149,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity
 // FindByGoogleID implements repository.UserRepository.
 func (r *UserRepository) FindByGoogleID(ctx context.Context, googleID string) (*entity.User, error) {
 	query := `
-	SELECT id, email, password, name, google_id, is_email_verified, created_at, updated_at
+	SELECT id, email, password, role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id, created_at, updated_at
 	FROM users
 	WHERE google_id = $1
 	`
@@ -140,9 +159,16 @@ func (r *UserRepository) FindByGoogleID(ctx context.Context, googleID string) (*
 		&user.ID,
 		&user.Email,
 		&user.Password,
+		&user.Role,
 		&user.Name,
+		&user.DateOfBirth,
+		&user.ProfilePhoto,
+		&user.PhoneNumber,
+		&user.Gender,
+		&user.Address,
+		&user.BloodType,
+		&user.Rhesus,
 		&user.GoogleID,
-		&user.IsEmailVerified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -201,24 +227,24 @@ func (r *UserRepository) UpdatePassword(ctx context.Context, userID uint, hashed
 }
 
 // VerifyEmail implements repository.UserRepository.
-func (r *UserRepository) VerifyEmail(ctx context.Context, userID uint) error {
-	query := `
-	UPDATE users
-	SET is_email_verified = true, updated_at = $1
-	WHERE id = $2
-	`
+// func (r *UserRepository) VerifyEmail(ctx context.Context, userID uint) error {
+// 	query := `
+// 	UPDATE users
+// 	SET is_email_verified = true, updated_at = $1
+// 	WHERE id = $2
+// 	`
 
-	now := time.Now()
+// 	now := time.Now()
 
-	_, err := r.db.ExecContext(
-		ctx,
-		query,
-		now,
-		userID,
-	)
+// 	_, err := r.db.ExecContext(
+// 		ctx,
+// 		query,
+// 		now,
+// 		userID,
+// 	)
 
-	return err
-}
+// 	return err
+// }
 
 func (r *UserRepository) UpdateProfilePhoto(ctx context.Context, userID uint, photoURL string) error {
 	query := `

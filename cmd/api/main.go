@@ -1,7 +1,17 @@
 package main
 
 import (
+	"context"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"syscall"
+	"time"
+
 	"backend/configs"
+	_ "backend/docs"
 	"backend/internal/delivery/http/handler"
 	"backend/internal/delivery/http/middleware"
 	"backend/internal/delivery/http/routes"
@@ -12,14 +22,6 @@ import (
 	"backend/internal/repository/postgres"
 	"backend/internal/usecase"
 	"backend/pkg/jwt"
-	"context"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -64,6 +66,8 @@ func main() {
 		config.Google.RedirectURL,
 	)
 
+	// Initialize storage
+
 	var fileStorage storage.FileStorage
 
 	if config.Storage.Type == "s3" {
@@ -92,7 +96,7 @@ func main() {
 	profileUseCase := usecase.NewProfileUseCase(userRepo, fileStorage)
 
 	// Initialize HTTP handlers
-	authHandler := handler.NewAuthHandler(authUseCase, jwtService, googleOauth)
+	authHandler := handler.NewAuthHandler(authUseCase, jwtService, googleOauth, fileStorage.(*storage.S3Storage))
 	authMiddleware := middleware.NewAuthMiddleware(jwtService, tokenRepo)
 	profileHandler := handler.NewProfileHandler(profileUseCase)
 
@@ -134,17 +138,17 @@ func main() {
 	}
 
 	// Jika menggunakan local storage, tambahkan route untuk static files
-if config.Storage.Type == "local" {
-	// Buat direktori uploads jika belum ada
-	uploadsDir := filepath.Join(".", "uploads")
-	if err := os.MkdirAll(uploadsDir, 0755); err != nil {
-		log.Fatalf("Failed to create uploads directory: %v", err)
+	if config.Storage.Type == "local" {
+		// Buat direktori uploads jika belum ada
+		uploadsDir := filepath.Join(".", "uploads")
+		if err := os.MkdirAll(uploadsDir, 0755); err != nil {
+			log.Fatalf("Failed to create uploads directory: %v", err)
+		}
+
+		// Serve static files dari direktori uploads
+		fs := http.FileServer(http.Dir(uploadsDir))
+		router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", fs))
 	}
-	
-	// Serve static files dari direktori uploads
-	fs := http.FileServer(http.Dir(uploadsDir))
-	router.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", fs))
-}
 
 	log.Println("Server exited properly")
 }

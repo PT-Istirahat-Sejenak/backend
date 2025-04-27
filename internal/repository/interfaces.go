@@ -13,7 +13,7 @@ type UserRepository interface {
 	Update(ctx context.Context, user *entity.User) error
 	UpdatePassword(ctx context.Context, userID uint, hashedPassword string) error
 	UpdateProfilePhoto(ctx context.Context, userID uint, photoURL string) error
-	VerifyEmail(ctx context.Context, userID uint) error
+	// VerifyEmail(ctx context.Context, userID uint) error
 }
 
 type TokenRepository interface {

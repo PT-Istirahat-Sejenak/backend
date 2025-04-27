@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 func SetupRoutes(
@@ -19,9 +20,11 @@ func SetupRoutes(
 	router.HandleFunc("/api/auth/login", authHandler.Login).Methods("POST")
 	router.HandleFunc("/api/auth/google/url", authHandler.GetGoogleAuthURL).Methods("GET")
 	router.HandleFunc("/api/auth/google/login", authHandler.GoogleLogin).Methods("POST")
-	router.HandleFunc("/api/auth/verify-email", authHandler.VerifyEmail).Methods("POST")
+	// router.HandleFunc("/api/auth/verify-email", authHandler.VerifyEmail).Methods("POST")
 	router.HandleFunc("/api/auth/forgot-password", authHandler.RequestPasswordReset).Methods("POST")
 	router.HandleFunc("/api/auth/reset-password", authHandler.ResetPassword).Methods("POST")
+
+	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	// Protected routes
 	protected := router.PathPrefix("/api").Subrouter()

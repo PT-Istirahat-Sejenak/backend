@@ -1,0 +1,194 @@
+definitions:
+  entity.User:
+    properties:
+      address:
+        type: string
+      blood_type:
+        type: string
+      created_at:
+        type: string
+      date_of_birth:
+        type: string
+      email:
+        type: string
+      gender:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      phone_number:
+        type: string
+      profile_photo:
+        type: string
+      rhesus:
+        type: string
+      role:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  handler.GoogleLoginRequest:
+    properties:
+      code:
+        type: string
+    type: object
+  handler.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handler.LoginResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/entity.User'
+    type: object
+info:
+  contact: {}
+paths:
+  /api/auth/google/login:
+    post:
+      consumes:
+      - application/json
+      description: Google login
+      parameters:
+      - description: Google login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.GoogleLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Google login
+      tags:
+      - Auth
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login a user
+      parameters:
+      - description: Login request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login a user
+      tags:
+      - Auth
+  /api/auth/register:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Register a new user
+      parameters:
+      - default: Fahrul
+        description: Name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - default: 2eVH5@example.com
+        description: Email
+        in: formData
+        name: email
+        required: true
+        type: string
+      - default: fahrul123
+        description: Password
+        in: formData
+        name: password
+        required: true
+        type: string
+      - default: patient
+        description: Role
+        in: formData
+        name: role
+        required: true
+        type: string
+      - default: "2000-01-02"
+        description: Date of Birth
+        format: date
+        in: formData
+        name: date_of_birth
+        required: true
+        type: string
+      - default: "1234567890"
+        description: Phone Number
+        in: formData
+        name: phone_number
+        required: true
+        type: string
+      - description: Profile Photo
+        in: formData
+        name: profile_photo
+        type: file
+      - default: male
+        description: Gender
+        in: formData
+        name: gender
+        required: true
+        type: string
+      - default: Jakarta
+        description: Address
+        in: formData
+        name: address
+        required: true
+        type: string
+      - default: AB
+        description: Blood Type
+        in: formData
+        name: blood_type
+        type: string
+      - default: +
+        description: Rhesus
+        in: formData
+        name: rhesus
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entity.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - Auth
+swagger: "2.0"

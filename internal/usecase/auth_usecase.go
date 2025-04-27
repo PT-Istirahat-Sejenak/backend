@@ -30,7 +30,7 @@ func NewAuthUseCase(
 	jwtService *jwt.JWTService,
 	emailService *email.EmailService,
 	googleOauth *oauth.GooogleOauth,
-) AuhtUseCase {
+) AuthUseCase {
 	return &authUseCase{
 		userRepo:     userRepo,
 		tokenRepo:    tokenRepo,
@@ -39,14 +39,6 @@ func NewAuthUseCase(
 		googleOauth:  googleOauth,
 	}
 }
-
-// func (a *authUseCase) generateRandomToken(length int) (string, error) {
-// 	bytes := make([]byte, length)
-// 	if _, err := rand.Read(bytes); err != nil {
-// 		return "", err
-// 	}
-// 	return hex.EncodeToString(bytes), nil
-// }
 
 func (a *authUseCase) generateOTP(length int) (string, error) {
 	const digits = "0123456789"
@@ -63,7 +55,7 @@ func (a *authUseCase) generateOTP(length int) (string, error) {
 }
 
 // Register implements AuhtUseCase.
-func (a *authUseCase) Register(ctx context.Context, email, password, name, DateOfBirth, profilePhoto, phoneNumber, gender, address, bloodType, rhesus string) (*entity.User, error) {
+func (a *authUseCase) Register(ctx context.Context, email, password, role, name string, DateOfBirth time.Time, profilePhoto, phoneNumber, gender, address, bloodType, rhesus string) (*entity.User, error) {
 	existingUser, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -79,39 +71,21 @@ func (a *authUseCase) Register(ctx context.Context, email, password, name, DateO
 	}
 
 	user := &entity.User{
-		Email:           email,
-		Password:        hashedPassword,
-		Name:            name,
-		IsEmailVerified: false,
-		GoogleID:        nil,
+		Email:        email,
+		Password:     hashedPassword,
+		Name:         name,
+		Role:         role,
+		DateOfBirth:  DateOfBirth,
+		ProfilePhoto: profilePhoto,
+		PhoneNumber:  phoneNumber,
+		Gender:       gender,
+		Address:      address,
+		BloodType:    bloodType,
+		Rhesus:       rhesus,
+		GoogleID:     nil,
 	}
 
 	err = a.userRepo.Create(ctx, user)
-	if err != nil {
-		return nil, err
-	}
-
-	// Generate verification token
-	verificationCode, err := a.generateOTP(6)
-	if err != nil {
-		return nil, err
-	}
-
-	token := &entity.Token{
-		UserID:    user.ID,
-		Token:     verificationCode,
-		Type:      entity.EmailVerify,
-		ExpiresAt: time.Now().Add(24 * time.Hour),
-		CreatedAt: time.Now(),
-	}
-
-	err = a.tokenRepo.Create(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	// Send verification email
-	err = a.emailService.SendVerificationEmail(user.Email, verificationCode)
 	if err != nil {
 		return nil, err
 	}
@@ -176,10 +150,9 @@ func (a *authUseCase) GoogleLogin(ctx context.Context, code string) (string, *en
 			googleID := googleUser.ID
 
 			user = &entity.User{
-				Email:           googleUser.Email,
-				Name:            googleUser.Name,
-				GoogleID:        &googleID,
-				IsEmailVerified: true,
+				Email:    googleUser.Email,
+				Name:     googleUser.Name,
+				GoogleID: &googleID,
 			}
 
 			err = a.userRepo.Create(ctx, user)
@@ -193,7 +166,6 @@ func (a *authUseCase) GoogleLogin(ctx context.Context, code string) (string, *en
 
 			googleID := googleUser.ID
 			user.GoogleID = &googleID
-			user.IsEmailVerified = googleUser.VerifiedEmail
 
 			err = a.userRepo.Update(ctx, user)
 			if err != nil {
@@ -215,28 +187,28 @@ func (a *authUseCase) GoogleLogin(ctx context.Context, code string) (string, *en
 	return token, nil, nil
 }
 
-// VerifyEmail implements AuhtUseCase.
-func (a *authUseCase) VerifyEmail(ctx context.Context, token string) error {
-	tokenEntity, err := a.tokenRepo.FindByToken(ctx, token, entity.EmailVerify)
-	if err != nil {
-		return err
-	}
+// // VerifyEmail implements AuhtUseCase.
+// func (a *authUseCase) VerifyEmail(ctx context.Context, token string) error {
+// 	tokenEntity, err := a.tokenRepo.FindByToken(ctx, token, entity.EmailVerify)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	if tokenEntity == nil {
-		return errors.New("invalid or expired token")
-	}
+// 	if tokenEntity == nil {
+// 		return errors.New("invalid or expired token")
+// 	}
 
-	if tokenEntity.ExpiresAt.Before(time.Now()) {
-		return errors.New("token expired")
-	}
+// 	if tokenEntity.ExpiresAt.Before(time.Now()) {
+// 		return errors.New("token expired")
+// 	}
 
-	err = a.userRepo.VerifyEmail(ctx, tokenEntity.UserID)
-	if err != nil {
-		return err
-	}
+// 	err = a.userRepo.VerifyEmail(ctx, tokenEntity.UserID)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	return a.tokenRepo.Delete(ctx, tokenEntity.ID)
-}
+// 	return a.tokenRepo.Delete(ctx, tokenEntity.ID)
+// }
 
 // RequestPasswordReset implements AuhtUseCase.
 func (a *authUseCase) RequestPasswordReset(ctx context.Context, email string) error {

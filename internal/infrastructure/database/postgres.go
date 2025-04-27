@@ -35,17 +35,17 @@ const CreateTablesSQL = `
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255),
+    password VARCHAR(255) NOT NULL,
+	role VARCHAR(20) NOT NULL,
     name VARCHAR(255) NOT NULL,
-    date_of_birth VARCHAR(255),
+    date_of_birth DATE NOT NULL,
     profile_photo VARCHAR(255),
-    phone_number VARCHAR(20),
-    gender VARCHAR(10),
-    address TEXT,
+    phone_number VARCHAR(20) NOT NULL,
+    gender VARCHAR(10) NOT NULL,
+    address TEXT NOT NULL,
     blood_type VARCHAR(5),
     rhesus VARCHAR(1),
     google_id VARCHAR(255),
-    is_email_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );

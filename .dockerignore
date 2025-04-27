@@ -1,0 +1,60 @@
+# Binary files dan compiled artifacts
+/bin
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+app
+__debug_bin
+
+# Test files
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Git dan SCM
+.git
+.gitignore
+.gitattributes
+.github/
+
+# Docker files (jika tidak perlu dalam build context)
+.dockerignore
+docker-compose*.yml
+
+# Temporary files
+/tmp
+*.tmp
+*.log
+
+# Go modules cache and local vendoring
+/vendor
+/go-build
+/.go
+
+# Environment dan configurasi lokal
+.env
+.env.*
+!.env.example
+*.local
+
+# Dokumentasi
+*.md
+!README.md
+
+# Miscellaneous
+*.bak
+*.old

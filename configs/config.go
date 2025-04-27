@@ -62,9 +62,10 @@ type StorageConfig struct {
 }
 
 func LoadConfig() (*Config, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %v", err)
+	if _, err := os.Stat(".env"); err == nil {
+		if err := godotenv.Load(); err != nil {
+			return nil, fmt.Errorf("error loading .env file: %v", err)
+		}
 	}
 
 	expTime, _ := strconv.Atoi(os.Getenv("JWT_EXPIRE_TIME"))
