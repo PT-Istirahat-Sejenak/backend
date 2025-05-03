@@ -12,24 +12,23 @@ import (
 )
 
 type GooogleOauth struct {
-	clientID     string
-	clientSecret string
-	redirectURL  string
+	clientID string
+	// clientSecret string
+	redirectURL string
 }
 
 type GoogleUserInfo struct {
-	ID            string `json:"id"`
-	Email         string `json:"email"`
-	VerifiedEmail bool   `json:"verified_email"`
-	Name          string `json:"name"`
-	Picture       string `json:"picture"`
+	ID      string `json:"id"`
+	Email   string `json:"email"`
+	Name    string `json:"name"`
+	Picture string `json:"picture"`
 }
 
-func NewGoogleOauth(clientID, clientSecret, redirectURL string) *GooogleOauth {
+func NewGoogleOauth(clientID, redirectURL string) *GooogleOauth {
 	return &GooogleOauth{
-		clientID:     clientID,
-		clientSecret: clientSecret,
-		redirectURL:  redirectURL,
+		clientID: clientID,
+		// clientSecret: clientSecret,
+		redirectURL: redirectURL,
 	}
 }
 
@@ -47,7 +46,7 @@ func (g *GooogleOauth) GetUserInfo(ctx context.Context, code string) (*GoogleUse
 	values := url.Values{}
 	values.Add("code", code)
 	values.Add("client_id", g.clientID)
-	values.Add("client_secret", g.clientSecret)
+	// values.Add("client_secret", g.clientSecret)
 	values.Add("redirect_uri", g.redirectURL)
 	values.Add("grant_type", "authorization_code")
 

@@ -6,6 +6,7 @@ import (
 	"backend/internal/infrastructure/storage"
 	"backend/internal/usecase"
 	"backend/pkg/jwt"
+	"mime/multipart"
 
 	"encoding/json"
 	"fmt"
@@ -31,17 +32,17 @@ func NewAuthHandler(authUseCase usecase.AuthUseCase, jwtService *jwt.JWTService,
 }
 
 type RegisterRequest struct {
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	Name         string `json:"name"`
-	Role         string `json:"role"`
-	DateOfBirth  string `json:"date_of_birth"`
-	ProfilePhoto string `json:"profile_photo"`
-	PhoneNumber  string `json:"phone_number"`
-	Gender       string `json:"gender"`
-	Address      string `json:"address"`
-	BloodType    string `json:"blood_type"`
-	Rhesus       string `json:"rhesus"`
+	Email        string                `json:"email"`
+	Password     string                `json:"password"`
+	Name         string                `json:"name"`
+	Role         string                `json:"role"`
+	DateOfBirth  string                `json:"date_of_birth"`
+	ProfilePhoto *multipart.FileHeader `json:"profile_photo"`
+	PhoneNumber  string                `json:"phone_number"`
+	Gender       string                `json:"gender"`
+	Address      string                `json:"address"`
+	BloodType    string                `json:"blood_type"`
+	Rhesus       string                `json:"rhesus"`
 }
 
 type LoginRequest struct {
@@ -98,7 +99,7 @@ func isImageFile(contentType string) bool {
 // @Accept x-www-form-urlencoded
 // @Produce json
 // @Param name formData string true "Name" default(Fahrul)
-// @Param email formData string true "Email" default(2eVH5@example.com)
+// @Param email formData string true "Email" default(example@example.com)
 // @Param password formData string true "Password" default(fahrul123)
 // @Param role formData string true "Role" default(patient)
 // @Param date_of_birth formData string true "Date of Birth" format(date-time) default(2000-01-02)
@@ -244,11 +245,7 @@ func (h *AuthHandler) GetGoogleAuthURL(w http.ResponseWriter, r *http.Request) {
 // @Router /api/auth/google/login [post]
 func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	var req GoogleLoginRequest
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+	req.Code = r.URL.Query().Get("code")
 
 	if req.Code == "" {
 		http.Error(w, "Code is required", http.StatusBadRequest)
@@ -260,6 +257,22 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	// err := json.NewDecoder(r.Body).Decode(&req)
+	// if err != nil {
+	// 	http.Error(w, "Invalid request body", http.StatusBadRequest)
+	// 	return
+	// }
+
+	// if req.Code == "" {
+	// 	http.Error(w, "Code is required", http.StatusBadRequest)
+	// 	return
+	// }
+
+	// token, user, err := h.authUseCase.GoogleLogin(r.Context(), req.Code)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
 
 	response := LoginResponse{
 		Token: token,
@@ -293,6 +306,15 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 // 	json.NewEncoder(w).Encode(map[string]string{"message": "Email verified successfully"})
 // }
 
+// @Summary RequestPasswordReset
+// @Description RequestPasswordReset
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body ResetPasswordRequest true "Request Password Reset" default(example@example.com)
+// @Success 200 {object} string
+// @Failure 400 {object} map[string]string
+// @Router /api/auth/forgot-password [post]
 func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	var req ResetPasswordRequest
 	err := json.NewDecoder(r.Body).Decode(&req)

@@ -14,17 +14,39 @@ func SetupRoutes(
 	authHandler *handler.AuthHandler,
 	authMiddleware *middleware.AuthMiddleware,
 	profileHandler *handler.ProfileHandler,
+	eduHandler *handler.EducationHandler,
+	edivenceHandler *handler.UploadEvidenceHandler,
+	historyHandler *handler.HistoryHandler,
 ) {
 	// Public routes
 	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
 	router.HandleFunc("/api/auth/login", authHandler.Login).Methods("POST")
 	router.HandleFunc("/api/auth/google/url", authHandler.GetGoogleAuthURL).Methods("GET")
-	router.HandleFunc("/api/auth/google/login", authHandler.GoogleLogin).Methods("POST")
+	router.HandleFunc("/api/auth/google/callback", authHandler.GoogleLogin).Methods("GET")
 	// router.HandleFunc("/api/auth/verify-email", authHandler.VerifyEmail).Methods("POST")
 	router.HandleFunc("/api/auth/forgot-password", authHandler.RequestPasswordReset).Methods("POST")
 	router.HandleFunc("/api/auth/reset-password", authHandler.ResetPassword).Methods("POST")
-
 	router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	// cek education without middleware
+	router.HandleFunc("/api/educations", eduHandler.GetEducations).Methods("GET")
+	router.HandleFunc("/api/educations-pedonor", eduHandler.GetEducationsPendonor).Methods("GET")
+	router.HandleFunc("/api/educations-pencari-donor", eduHandler.GetEducationsPencariDonor).Methods("GET")
+	router.HandleFunc("/api/education", eduHandler.PostEducation).Methods("POST")
+	router.HandleFunc("/api/education", eduHandler.Update).Methods("PUT")
+	router.HandleFunc("/api/education", eduHandler.Delete).Methods("Delete")
+
+	// cek upload evidence image
+	router.HandleFunc("/api/upload-evidence", edivenceHandler.PostUploadEvidence).Methods("POST")
+
+	// cek history tanpa middleware
+	router.HandleFunc("/api/history", historyHandler.PostHistory).Methods("POST")
+
+	// cek history tanpa middleware
+	router.HandleFunc("/api/history", historyHandler.GetHistory).Methods("GET")
+	router.HandleFunc("/api/history", historyHandler.PostHistory).Methods("POST")
+	router.HandleFunc("/api/history/latest", historyHandler.GetLatestHistory).Methods("GET")
+	router.HandleFunc("/api/history/next", historyHandler.GetNextHistory).Methods("GET")
 
 	// Protected routes
 	protected := router.PathPrefix("/api").Subrouter()
@@ -37,4 +59,18 @@ func SetupRoutes(
 	// profile routes
 	protected.HandleFunc("/user/profile", profileHandler.GetProfile).Methods("GET")
 	protected.HandleFunc("/user/profile/photo", profileHandler.UpdateProfilePhoto).Methods("POST")
+
+	// education routes
+	// protected.HandleFunc("/educations",eduHandler.GetEducations).Methods("GET")
+	// protected.HandleFunc("/api/educations-pedonor", eduHandler.GetEducationsPendonor).Methods("GET")
+	// protected.HandleFunc("/api/educations-pencari-donor", eduHandler.GetEducationsPencariDonor).Methods("GET")
+	// protected.HandleFunc("/education", eduHandler.PostEducation).Methods("POST")
+	// protected.HandleFunc("/education", eduHandler.Update).Methods("PUT")
+	// protected.HandleFunc("/education", eduHandler.Delete).Methods("Delete")
+
+	// upload evidence routes
+	// protected.HandleFunc("/upload-evidence", edivenceHandler.PostUploadEvidence).Methods("POST")
+
+	// history routes
+	// protected.HandleFunc("/history", historyHandler.PostHistory).Methods("POST")
 }

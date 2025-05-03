@@ -45,7 +45,7 @@ type EmailConfig struct {
 
 type GoogleOAuthConfig struct {
 	ClientID     string
-	ClientSecret string
+	// ClientSecret string
 	RedirectURL  string
 }
 
@@ -95,7 +95,7 @@ func LoadConfig() (*Config, error) {
 		},
 		Google: GoogleOAuthConfig{
 			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+			// ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 			RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
 		},
 		Storage: StorageConfig{

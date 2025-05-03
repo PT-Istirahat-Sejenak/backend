@@ -12,17 +12,14 @@ import (
 	"time"
 )
 
-type ProfileUseCase interface {
-	UpdateProfilePhoto(ctx context.Context, userID uint, file multipart.File, fileHeader *multipart.FileHeader) (string, error)
-	GetUserProfile(ctx context.Context, userID uint) (*entity.User, error)
-}
-
 type profileUseCase struct {
 	userRepo    repository.UserRepository
 	fileStorage storage.FileStorage
 }
 
-func NewProfileUseCase(userRepo repository.UserRepository, fileStorage storage.FileStorage) ProfileUseCase {
+func NewProfileUseCase(
+	userRepo repository.UserRepository, fileStorage storage.FileStorage,
+) ProfileUseCase {
 	return &profileUseCase{
 		userRepo:    userRepo,
 		fileStorage: fileStorage,
@@ -30,27 +27,27 @@ func NewProfileUseCase(userRepo repository.UserRepository, fileStorage storage.F
 }
 
 func (p *profileUseCase) UpdateProfilePhoto(
-	ctx context.Context, 
-	userID uint, 
-	file multipart.File, 
+	ctx context.Context,
+	userID uint,
+	file multipart.File,
 	fileHeader *multipart.FileHeader,
 ) (string, error) {
 	// Validasi file
 	if fileHeader.Size > 5*1024*1024 { // 5MB
 		return "", fmt.Errorf("file size exceeds maximum limit of 5MB")
 	}
-	
+
 	// Validasi tipe file (hanya terima gambar)
 	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
 	allowedExts := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".gif": true}
 	if !allowedExts[ext] {
 		return "", fmt.Errorf("invalid file type, only JPG, JPEG, PNG, and GIF are allowed")
 	}
-	
+
 	// Buat nama file yang unik
 	timestamp := time.Now().UnixNano()
 	fileName := fmt.Sprintf("profiles/%d/%d%s", userID, timestamp, ext)
-	
+
 	// Tentukan content type berdasarkan ekstensi file
 	contentType := ""
 	switch ext {
@@ -61,13 +58,13 @@ func (p *profileUseCase) UpdateProfilePhoto(
 	case ".gif":
 		contentType = "image/gif"
 	}
-	
+
 	// Simpan file
 	fileInfo, err := p.fileStorage.SaveFile(ctx, fileName, file, contentType)
 	if err != nil {
 		return "", fmt.Errorf("failed to save profile photo: %v", err)
 	}
-	
+
 	// Update profil user di database
 	err = p.userRepo.UpdateProfilePhoto(ctx, userID, fileInfo.URL)
 	if err != nil {
@@ -75,7 +72,7 @@ func (p *profileUseCase) UpdateProfilePhoto(
 		_ = p.fileStorage.DeleteFile(ctx, fileName)
 		return "", fmt.Errorf("failed to update user profile: %v", err)
 	}
-	
+
 	return fileInfo.URL, nil
 }
 

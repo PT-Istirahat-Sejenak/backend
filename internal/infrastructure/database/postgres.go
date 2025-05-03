@@ -32,19 +32,42 @@ func NewPostgresConnection(config *configs.DatabaseConfig) (*sql.DB, error) {
 
 // SQL schema for database tables
 const CreateTablesSQL = `
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'blood_type') THEN
+    CREATE TYPE blood_type AS ENUM ('A', 'B', 'AB', 'O');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'rhesus') THEN
+    CREATE TYPE rhesus AS ENUM ('positive', 'negative');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+    CREATE TYPE user_role AS ENUM ('user', 'admin');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'education_type') THEN
+    CREATE TYPE education_type AS ENUM ('pencari', 'pendonor');
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'gender') THEN
+  	CREATE TYPE gender AS ENUM ('male', 'female');
+  END IF;
+END$$;
+
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-	role VARCHAR(20) NOT NULL,
+	role user_role NOT NULL,
     name VARCHAR(255) NOT NULL,
     date_of_birth DATE NOT NULL,
     profile_photo VARCHAR(255),
     phone_number VARCHAR(20) NOT NULL,
-    gender VARCHAR(10) NOT NULL,
+    gender gender NOT NULL,
     address TEXT NOT NULL,
     blood_type VARCHAR(5),
-    rhesus VARCHAR(1),
+    rhesus rhesus,
     google_id VARCHAR(255),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
@@ -64,6 +87,63 @@ CREATE TABLE IF NOT EXISTS tokens (
 CREATE INDEX IF NOT EXISTS idx_tokens_token ON tokens(token);
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
+
+CREATE TABLE IF NOT EXISTS educations (
+	id SERIAL PRIMARY KEY,
+	image VARCHAR(255),
+	title VARCHAR(255),
+	content TEXT,
+	type education_type,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+	id SERIAL PRIMARY KEY,
+	sender_id INT NOT NULL,
+	receiver_id INT NOT NULL,
+	message TEXT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS blood_requests (
+	id SERIAL PRIMARY KEY,
+	search_name VARCHAR(255) NOT NULL,
+	location VARCHAR(255) NOT NULL,
+	blood_type blood_type NOT NULL,
+	rhesus rhesus NOT NULL,
+	total INT NOT NULL,
+	available BOOLEAN NOT NULL,
+	urgency INT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS histories (
+	id SERIAL PRIMARY KEY,
+	user_id INT NOT NULL,
+	blood_request_id INT NOT NULL,
+	next_donation DATE,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (blood_request_id) REFERENCES blood_requests(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_histories_user_next_donation ON histories(user_id, next_donation DESC);
+CREATE INDEX IF NOT EXISTS idx_histories_user_created_at_desc ON histories(user_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS images (
+	id SERIAL PRIMARY KEY,
+	user_id INT NOT NULL,
+	image VARCHAR(255) NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
 `
 
 func InitDatabase(db *sql.DB) error {

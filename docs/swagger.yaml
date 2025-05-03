@@ -28,10 +28,44 @@ definitions:
       updated_at:
         type: string
     type: object
+  handler.EducationResponse:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+      updated_at:
+        type: string
+    type: object
   handler.GoogleLoginRequest:
     properties:
       code:
         type: string
+    type: object
+  handler.HistoryResponse:
+    properties:
+      blood_request_id:
+        type: integer
+      created_at:
+        type: string
+      id:
+        type: integer
+      image_donor:
+        type: string
+      next_donation:
+        type: string
+      updated_at:
+        type: string
+      user_id:
+        type: integer
     type: object
   handler.LoginRequest:
     properties:
@@ -47,9 +81,42 @@ definitions:
       user:
         $ref: '#/definitions/entity.User'
     type: object
+  handler.ResetPasswordRequest:
+    properties:
+      email:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
+  /api/auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: RequestPasswordReset
+      parameters:
+      - description: Request Password Reset
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: RequestPasswordReset
+      tags:
+      - Auth
   /api/auth/google/login:
     post:
       consumes:
@@ -118,7 +185,7 @@ paths:
         name: name
         required: true
         type: string
-      - default: 2eVH5@example.com
+      - default: example@example.com
         description: Email
         in: formData
         name: email
@@ -138,7 +205,7 @@ paths:
         type: string
       - default: "2000-01-02"
         description: Date of Birth
-        format: date
+        format: date-time
         in: formData
         name: date_of_birth
         required: true
@@ -191,4 +258,379 @@ paths:
       summary: Register a new user
       tags:
       - Auth
+  /api/education:
+    delete:
+      consumes:
+      - application/json
+      description: Delete education
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete education
+      tags:
+      - Education
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Post a new Education
+      parameters:
+      - description: Image
+        in: formData
+        name: image
+        required: true
+        type: file
+      - default: Donora menang juara 1 di GSC tingkat international 2025
+        description: Title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - default: This is
+        description: Content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - default: pendonor
+        description: Type
+        in: formData
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.EducationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new Education
+      tags:
+      - Education
+    put:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Update education
+      parameters:
+      - default: Donora menang juara 1 di GSC tingkat international 2025
+        description: Title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: Image
+        in: formData
+        name: image
+        required: true
+        type: file
+      - default: Alhamdulillah
+        description: Content
+        in: formData
+        name: content
+        required: true
+        type: string
+      - default: patient
+        description: Type
+        in: formData
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.EducationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update education
+      tags:
+      - Education
+  /api/educations:
+    get:
+      consumes:
+      - application/json
+      description: Get All and get by id and type with params
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.EducationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Education
+      tags:
+      - Education
+  /api/educations-pendonor:
+    get:
+      consumes:
+      - application/json
+      description: Get Education Pendonor
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.EducationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Education Pendonor
+      tags:
+      - Education
+  /api/educations/pencari-donor:
+    get:
+      consumes:
+      - application/json
+      description: Get Education Pencari Donor
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.EducationResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get Education Pencari Donor
+      tags:
+      - Education
+  /api/history:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of history records for a given user ID.
+      parameters:
+      - description: User ID
+        in: body
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handler.HistoryResponse'
+            type: array
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get user history
+      tags:
+      - History
+    post:
+      consumes:
+      - multipart/form-data
+      description: Create a new History
+      parameters:
+      - description: Image Donor
+        in: formData
+        name: image_donor
+        required: true
+        type: file
+      - description: User ID
+        in: formData
+        name: user_id
+        required: true
+        type: string
+      - description: Blood Request ID
+        in: formData
+        name: blood_request_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create History
+      tags:
+      - History
+  /api/history/latest:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the latest history record for a given user ID.
+      parameters:
+      - description: User ID
+        in: body
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Latest donation date
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get latest history
+      tags:
+      - History
+  /api/history/next:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the next scheduled donation date for the specified user.
+      parameters:
+      - description: User ID
+        in: body
+        name: user_id
+        required: true
+        schema:
+          type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Next donation date
+          schema:
+            type: string
+        "400":
+          description: Invalid user ID
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get next donation date
+      tags:
+      - History
+  /api/upload-evidence:
+    post:
+      consumes:
+      - application/x-www-form-urlencoded
+      description: Upload Evidence
+      parameters:
+      - description: Image
+        in: formData
+        name: image
+        required: true
+        type: file
+      - default: "1"
+        description: User ID
+        in: formData
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Upload Evidence
+      tags:
+      - Upload Evidence
 swagger: "2.0"

@@ -50,6 +50,9 @@ func main() {
 	// Initialize repositories
 	userRepo := postgres.NewUserRepository(db)
 	tokenRepo := postgres.NewTokenRepository(db)
+	educationRepo := postgres.NewEducationRepository(db)
+	uploadEvidenceRepo := postgres.NewUploadEvidenceRepository(db)
+	historyRepo := postgres.NewHistoryRepository(db)
 
 	// Initialize services
 	jwtService := jwt.NewJWTService(config.JWT.Secret, config.JWT.ExpireTime)
@@ -62,7 +65,7 @@ func main() {
 	)
 	googleOauth := oauth.NewGoogleOauth(
 		config.Google.ClientID,
-		config.Google.ClientSecret,
+		// config.Google.ClientSecret,
 		config.Google.RedirectURL,
 	)
 
@@ -94,15 +97,21 @@ func main() {
 	// Initialize use cases
 	authUseCase := usecase.NewAuthUseCase(userRepo, tokenRepo, jwtService, emailService, googleOauth)
 	profileUseCase := usecase.NewProfileUseCase(userRepo, fileStorage)
+	educationUseCase := usecase.NewEducationUseCase(educationRepo, fileStorage)
+	uploadEvidenceUseCase := usecase.NewUploadEvidenceUseCase(uploadEvidenceRepo, fileStorage)
+	historyUseCase := usecase.NewHistoryUseCase(historyRepo, fileStorage)
 
 	// Initialize HTTP handlers
 	authHandler := handler.NewAuthHandler(authUseCase, jwtService, googleOauth, fileStorage.(*storage.S3Storage))
 	authMiddleware := middleware.NewAuthMiddleware(jwtService, tokenRepo)
 	profileHandler := handler.NewProfileHandler(profileUseCase)
+	educationHandler := handler.NewEducationHandler(educationUseCase, fileStorage.(*storage.S3Storage))
+	uploadEvidenceHandler := handler.NewUploadEvidenceHandler(uploadEvidenceUseCase, fileStorage.(*storage.S3Storage))
+	historyHandler := handler.NewHistoryHandler(historyUseCase, authUseCase, fileStorage.(*storage.S3Storage))
 
 	// Initialize router
 	router := mux.NewRouter()
-	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler)
+	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler, educationHandler, uploadEvidenceHandler, historyHandler)
 
 	// Configure HTTP server
 	server := &http.Server{

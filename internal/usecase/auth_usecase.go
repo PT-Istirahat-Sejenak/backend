@@ -140,7 +140,7 @@ func (a *authUseCase) GoogleLogin(ctx context.Context, code string) (string, *en
 		}
 
 		if user == nil {
-			// Create new user
+			// // Create new user
 			// user = entity.NewGoogleUser(
 			// 	googleUser.Email,
 			// 	googleUser.Name,
@@ -150,9 +150,10 @@ func (a *authUseCase) GoogleLogin(ctx context.Context, code string) (string, *en
 			googleID := googleUser.ID
 
 			user = &entity.User{
-				Email:    googleUser.Email,
-				Name:     googleUser.Name,
-				GoogleID: &googleID,
+				Email:        googleUser.Email,
+				Name:         googleUser.Name,
+				ProfilePhoto: googleUser.Picture,
+				GoogleID:     &googleID,
 			}
 
 			err = a.userRepo.Create(ctx, user)

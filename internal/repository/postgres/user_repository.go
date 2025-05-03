@@ -20,7 +20,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	query := `
-	INSERT INTO users (email, password,role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id, created_at, updated_at) 
+	INSERT INTO users (email, password, role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id, created_at, updated_at) 
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 	RETURNING id
 	`
@@ -80,9 +80,9 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, e
 		&user.Name,
 		&user.DateOfBirth,
 		&user.ProfilePhoto,
-		&user.Address,
 		&user.PhoneNumber,
 		&user.Gender,
+		&user.Address,
 		&user.BloodType,
 		&user.Rhesus,
 		&user.GoogleID,
@@ -92,7 +92,7 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, e
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, err
+			return nil, nil
 		}
 		return nil, err
 	}
