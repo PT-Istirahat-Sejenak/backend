@@ -1,2 +1,2 @@
-# Welcome to mobel lejen
+# Welkom to mobel lejen
 hehe

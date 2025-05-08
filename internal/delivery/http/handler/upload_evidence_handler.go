@@ -52,6 +52,15 @@ func (h *UploadEvidenceHandler) PostUploadEvidence(w http.ResponseWriter, r *htt
 	}
 	defer file.Close()
 
+	contentType := fileHeader.Header.Get("Content-Type")
+	if !isImageFile(contentType) {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid file type"})
+		return
+	}
+
+	
+
 	fileName := fmt.Sprintf("evidences/%d_%s", time.Now().Unix(), fileHeader.Filename)
 	fileInfo, err := h.storage.SaveFile(r.Context(), fileName, file, fileHeader.Header.Get("Content-Type"))
 	if err != nil {

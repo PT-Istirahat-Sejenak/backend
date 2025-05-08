@@ -17,6 +17,7 @@ func SetupRoutes(
 	eduHandler *handler.EducationHandler,
 	edivenceHandler *handler.UploadEvidenceHandler,
 	historyHandler *handler.HistoryHandler,
+	chatBotHandler *handler.ChatbotHandler,
 ) {
 	// Public routes
 	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
@@ -47,6 +48,9 @@ func SetupRoutes(
 	router.HandleFunc("/api/history", historyHandler.PostHistory).Methods("POST")
 	router.HandleFunc("/api/history/latest", historyHandler.GetLatestHistory).Methods("GET")
 	router.HandleFunc("/api/history/next", historyHandler.GetNextHistory).Methods("GET")
+
+	// cek chatbot tanpa middleware
+	router.HandleFunc("/api/chatbot", chatBotHandler.HandleChat).Methods("POST")
 
 	// Protected routes
 	protected := router.PathPrefix("/api").Subrouter()

@@ -119,3 +119,12 @@ func (r *HistoryRepository) LatestDonation(ctx context.Context, userID uint) (da
 
 	return history.CreatedAt, nil
 }
+
+func (r *HistoryRepository) CountDonation(ctx context.Context, userID uint) (count int, err error) {
+	query := `
+	SELECT COUNT(*) FROM histories WHERE user_id = $1;
+	`
+
+	err = r.db.QueryRowContext(ctx, query, userID).Scan(&count)
+	return count, err
+}

@@ -198,6 +198,12 @@ func (h *HistoryHandler) PostHistory(w http.ResponseWriter, r *http.Request) {
 	// w.WriteHeader(http.StatusCreated)
 	// json.NewEncoder(w).Encode(map[string]string{"message": "History created"})
 
+	contentType := fileHeader.Header.Get("Content-Type")
+	if !isImageFile(contentType) {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid file type"})
+		return
+	}
 	fileName := fmt.Sprintf("histories/%d_%s", time.Now().Unix(), fileHeader.Filename)
 	fileInfo, err := h.storage.SaveFile(r.Context(), fileName, file, fileHeader.Header.Get("Content-Type"))
 	if err != nil {
@@ -251,6 +257,20 @@ func (h *HistoryHandler) PostHistory(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to create history"})
 		return
+	}
+
+	total := user.TotalDonation + 1
+	coin := user.Coin + 10
+	err = h.authUseCase.UpdateCountDonation(r.Context(), uint(userID), total)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update count donation"})
+	}
+
+	err = h.authUseCase.UpdateCoinTotal(r.Context(), uint(userID), coin)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Failed to update coin"})
 	}
 
 	w.WriteHeader(http.StatusCreated)

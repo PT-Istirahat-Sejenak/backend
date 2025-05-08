@@ -69,6 +69,8 @@ CREATE TABLE IF NOT EXISTS users (
     blood_type VARCHAR(5),
     rhesus rhesus,
     google_id VARCHAR(255),
+	total_donation INT DEFAULT 0,
+	coin INT DEFAULT 0,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -144,6 +146,14 @@ CREATE TABLE IF NOT EXISTS images (
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS reward (
+	id SERIAL PRIMARY KEY,
+	amount INT NOT NULL,
+	price INT NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)
 `
 
 func InitDatabase(db *sql.DB) error {

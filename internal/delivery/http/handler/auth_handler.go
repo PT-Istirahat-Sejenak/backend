@@ -69,7 +69,7 @@ type VerifyEmailRequest struct {
 }
 
 type GoogleLoginRequest struct {
-	Code string `json:"code"`
+	Token string `json:"token"`
 }
 
 type LogoutRequest struct {
@@ -244,24 +244,8 @@ func (h *AuthHandler) GetGoogleAuthURL(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} map[string]string
 // @Router /api/auth/google/login [post]
 func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
-	var req GoogleLoginRequest
-	req.Code = r.URL.Query().Get("code")
-
-	if req.Code == "" {
-		http.Error(w, "Code is required", http.StatusBadRequest)
-		return
-	}
-
-	token, user, err := h.authUseCase.GoogleLogin(r.Context(), req.Code)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	// err := json.NewDecoder(r.Body).Decode(&req)
-	// if err != nil {
-	// 	http.Error(w, "Invalid request body", http.StatusBadRequest)
-	// 	return
-	// }
+	// var req GoogleLoginRequest
+	// req.Code = r.URL.Query().Get("code")
 
 	// if req.Code == "" {
 	// 	http.Error(w, "Code is required", http.StatusBadRequest)
@@ -273,6 +257,35 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
 	// 	return
 	// }
+
+	// response := LoginResponse{
+	// 	Token: token,
+	// 	User:  user,
+	// }
+
+	// w.Header().Set("Content-Type", "application/json")
+	// json.NewEncoder(w).Encode(response)
+
+	var req GoogleLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	userGoogle, err := h.googleOauth.VerifyGoogleIDToken(r.Context(), req.Token)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	token, user, err := h.authUseCase.GoogleLoginMobile(r.Context(), *userGoogle)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	response := LoginResponse{
 		Token: token,

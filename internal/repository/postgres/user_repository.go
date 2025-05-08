@@ -39,22 +39,21 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	err := r.db.QueryRowContext(
 		ctx,
 		query,
-		user.Email,         // $1
-		user.Password,      // $2
-		user.Role,          // $3
-		user.Name,          // $4
-		user.DateOfBirth,   // $5
-		user.ProfilePhoto,  // $6
-		user.PhoneNumber,   // $7
-		user.Gender,        // $8
-		user.Address,       // $9
-		user.BloodType,     // $10
-		user.Rhesus,        // $11
-		googleID,           // $12
-		user.CreatedAt,     // $13
-		user.UpdatedAt,     // $14
+		user.Email,        // $1
+		user.Password,     // $2
+		user.Role,         // $3
+		user.Name,         // $4
+		user.DateOfBirth,  // $5
+		user.ProfilePhoto, // $6
+		user.PhoneNumber,  // $7
+		user.Gender,       // $8
+		user.Address,      // $9
+		user.BloodType,    // $10
+		user.Rhesus,       // $11
+		googleID,          // $12
+		user.CreatedAt,    // $13
+		user.UpdatedAt,    // $14
 	).Scan(&user.ID)
-	
 
 	if err != nil {
 		return err
@@ -86,6 +85,8 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, e
 		&user.BloodType,
 		&user.Rhesus,
 		&user.GoogleID,
+		&user.TotalDonation,
+		&user.Coin,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -125,6 +126,8 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity
 		&user.BloodType,
 		&user.Rhesus,
 		&googleID,
+		&user.TotalDonation,
+		&user.Coin,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -169,6 +172,8 @@ func (r *UserRepository) FindByGoogleID(ctx context.Context, googleID string) (*
 		&user.BloodType,
 		&user.Rhesus,
 		&user.GoogleID,
+		&user.TotalDonation,
+		&user.Coin,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -256,5 +261,31 @@ func (r *UserRepository) UpdateProfilePhoto(ctx context.Context, userID uint, ph
 	now := time.Now()
 
 	_, err := r.db.ExecContext(ctx, query, photoURL, now, userID)
+	return err
+}
+
+func (r *UserRepository) UpdateTotalDonation(ctx context.Context, userID uint, totalDonation int) error {
+	query := `
+		UPDATE users
+		SET total_donation = $1, updated_at = $2
+		WHERE id = $3
+	`
+
+	now := time.Now()
+
+	_, err := r.db.ExecContext(ctx, query, totalDonation, now, userID)
+	return err
+}
+
+func (r *UserRepository) UpdateCoin(ctx context.Context, userID uint, coin int) error {
+	query := `
+		UPDATE users
+		SET coin = $1, updated_at = $2
+		WHERE id = $3
+	`
+
+	now := time.Now()
+
+	_, err := r.db.ExecContext(ctx, query, coin, now, userID)
 	return err
 }

@@ -14,6 +14,8 @@ type UserRepository interface {
 	Update(ctx context.Context, user *entity.User) error
 	UpdatePassword(ctx context.Context, userID uint, hashedPassword string) error
 	UpdateProfilePhoto(ctx context.Context, userID uint, photoURL string) error
+	UpdateTotalDonation(ctx context.Context, userID uint, totalDonation int) error
+	UpdateCoin(ctx context.Context, userID uint, coin int) error
 	// VerifyEmail(ctx context.Context, userID uint) error
 }
 

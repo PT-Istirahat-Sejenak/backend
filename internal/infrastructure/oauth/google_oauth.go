@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"google.golang.org/api/idtoken"
 )
 
 type GooogleOauth struct {
@@ -113,4 +115,19 @@ func (g *GooogleOauth) GetUserInfo(ctx context.Context, code string) (*GoogleUse
 	}
 
 	return &userInfo, nil
+}
+
+func (g *GooogleOauth) VerifyGoogleIDToken(ctx context.Context, idToken string) (*GoogleUserInfo, error) {
+	payload, err := idtoken.Validate(ctx, idToken, "") // "" artinya audience-nya bebas
+	if err != nil {
+		return nil, err
+	}
+
+	// Ambil info dari payload
+	return &GoogleUserInfo{
+		ID:      payload.Subject,
+		Email:   payload.Claims["email"].(string),
+		Name:    payload.Claims["name"].(string),
+		Picture: payload.Claims["picture"].(string),
+	}, nil
 }

@@ -80,6 +80,12 @@ func (e *EducationHandler) PostEducation(w http.ResponseWriter, r *http.Request)
 	}
 	defer file.Close()
 
+	contentType := fileHeader.Header.Get("Content-Type")
+	if !isImageFile(contentType) {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid file type"})
+		return
+	}
 	fileName := fmt.Sprintf("educations/%d_%s", time.Now().Unix(), fileHeader.Filename)
 	fileInfo, err := e.storage.SaveFile(r.Context(), fileName, file, fileHeader.Header.Get("Content-Type"))
 	if err != nil {

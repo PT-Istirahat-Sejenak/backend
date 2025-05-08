@@ -188,6 +188,61 @@ func (a *authUseCase) GoogleLogin(ctx context.Context, code string) (string, *en
 	return token, nil, nil
 }
 
+// GoogleLoginMobile implements AuthUseCase.
+func (a *authUseCase) GoogleLoginMobile(ctx context.Context, googleInfo oauth.GoogleUserInfo) (string, *entity.User, error) {
+	user, err := a.userRepo.FindByGoogleID(ctx, googleInfo.ID)
+	if err != nil {
+		return "", nil, err
+	}
+
+	var isNewUser bool
+
+	if user == nil {
+		user, err = a.userRepo.FindByEmail(ctx, googleInfo.Email)
+		if err != nil {
+			return "", nil, err
+		}
+
+		if user == nil {
+			googleID := googleInfo.ID
+
+			user = &entity.User{
+				Email:        googleInfo.Email,
+				Name:         googleInfo.Name,
+				ProfilePhoto: googleInfo.Picture,
+				GoogleID:     &googleID,
+			}
+
+			err = a.userRepo.Create(ctx, user)
+			if err != nil {
+				return "", nil, err
+			}
+
+			isNewUser = true
+		} else {
+			googleID := googleInfo.ID
+			user.GoogleID = &googleID
+
+			err = a.userRepo.Update(ctx, user)
+			if err != nil {
+				return "", nil, err
+			}
+		}
+	}
+
+	// Generate JWT token
+	token, err := a.jwtService.GenerateToken(user.ID)
+	if err != nil {
+		return "", nil, err
+	}
+
+	if isNewUser {
+		return token, user, nil
+	}
+
+	return token, nil, nil
+}
+
 // // VerifyEmail implements AuhtUseCase.
 // func (a *authUseCase) VerifyEmail(ctx context.Context, token string) error {
 // 	tokenEntity, err := a.tokenRepo.FindByToken(ctx, token, entity.EmailVerify)
@@ -283,6 +338,14 @@ func (a *authUseCase) ResetPassword(ctx context.Context, token string, newPasswo
 // GetUserByID implements AuhtUseCase.
 func (a *authUseCase) GetUserByID(ctx context.Context, id uint) (*entity.User, error) {
 	return a.userRepo.FindById(ctx, id)
+}
+
+func (a *authUseCase) UpdateCountDonation(ctx context.Context, userID uint, totalDonation int) error {
+	return a.userRepo.UpdateTotalDonation(ctx, userID, totalDonation)
+}
+
+func (a *authUseCase) UpdateCoinTotal(ctx context.Context, userID uint, coin int) error {
+	return a.userRepo.UpdateCoin(ctx, userID, coin)
 }
 
 func (a *authUseCase) Logout(ctx context.Context, userID uint, token string) error {

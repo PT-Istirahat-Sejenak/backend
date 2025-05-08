@@ -100,6 +100,7 @@ func main() {
 	educationUseCase := usecase.NewEducationUseCase(educationRepo, fileStorage)
 	uploadEvidenceUseCase := usecase.NewUploadEvidenceUseCase(uploadEvidenceRepo, fileStorage)
 	historyUseCase := usecase.NewHistoryUseCase(historyRepo, fileStorage)
+	chatbotUseCase := usecase.NewChatbotUsecase(config.ChatBot)
 
 	// Initialize HTTP handlers
 	authHandler := handler.NewAuthHandler(authUseCase, jwtService, googleOauth, fileStorage.(*storage.S3Storage))
@@ -108,10 +109,11 @@ func main() {
 	educationHandler := handler.NewEducationHandler(educationUseCase, fileStorage.(*storage.S3Storage))
 	uploadEvidenceHandler := handler.NewUploadEvidenceHandler(uploadEvidenceUseCase, fileStorage.(*storage.S3Storage))
 	historyHandler := handler.NewHistoryHandler(historyUseCase, authUseCase, fileStorage.(*storage.S3Storage))
+	chatbotHandler := handler.NewChatbotHandler(chatbotUseCase)
 
 	// Initialize router
 	router := mux.NewRouter()
-	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler, educationHandler, uploadEvidenceHandler, historyHandler)
+	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler, educationHandler, uploadEvidenceHandler, historyHandler, chatbotHandler)
 
 	// Configure HTTP server
 	server := &http.Server{

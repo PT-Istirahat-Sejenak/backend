@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"backend/internal/entity"
+	"backend/internal/infrastructure/oauth"
 	"context"
 	"mime/multipart"
 	"time"
@@ -11,10 +12,13 @@ type AuthUseCase interface {
 	Register(ctx context.Context, email, password, role, name string, DateOfBirth time.Time, profilePhoto, phoneNumber, gender, address, bloodType, rhesus string) (*entity.User, error)
 	Login(ctx context.Context, email, password string) (string, error)
 	GoogleLogin(ctx context.Context, code string) (string, *entity.User, error)
+	GoogleLoginMobile(ctx context.Context, googleInfo oauth.GoogleUserInfo) (string, *entity.User, error)
 	// VerifyEmail(ctx context.Context, token string) error
 	RequestPasswordReset(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, token, newPassword string) error
 	GetUserByID(ctx context.Context, id uint) (*entity.User, error)
+	UpdateCountDonation(ctx context.Context, userID uint, total int) error
+	UpdateCoinTotal(ctx context.Context, userID uint, coin int) error
 	Logout(ctx context.Context, userID uint, token string) error
 }
 
@@ -42,4 +46,13 @@ type HistoryUseCase interface {
 	HistoryByUserId(ctx context.Context, userID uint) ([]*entity.History, error)
 	GetNextDonation(ctx context.Context, userID uint) (date time.Time, err error)
 	GetLatestDonation(ctx context.Context, userID uint) (date time.Time, err error)
+}
+
+type ChatbotUsecase interface {
+	GetReply(ctx context.Context, userID uint, message string) (string, error)
+}
+
+type TopUp interface {
+	MakeTopUp(ctx context.Context, operatorI, amount, number string) (res *entity.TopUpResponse, err error)
+	GetSaldo(ctx context.Context) (res int, err error)
 }

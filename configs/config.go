@@ -15,6 +15,8 @@ type Config struct {
 	Email    EmailConfig
 	Google   GoogleOAuthConfig
 	Storage  StorageConfig
+	ChatBot  ChatBotConfig
+	Reloadly ReloadlyConfig
 }
 
 type ServerConfig struct {
@@ -44,9 +46,13 @@ type EmailConfig struct {
 }
 
 type GoogleOAuthConfig struct {
-	ClientID     string
+	ClientID string
 	// ClientSecret string
-	RedirectURL  string
+	RedirectURL string
+}
+
+type ChatBotConfig struct {
+	APIKey string
 }
 
 type StorageConfig struct {
@@ -59,6 +65,13 @@ type StorageConfig struct {
 	S3BucketName  string
 	S3Region      string
 	S3BaseURL     string
+}
+
+type ReloadlyConfig struct {
+	ClientID     string
+	ClientSecret string
+	GrantType    string
+	Audience     string
 }
 
 func LoadConfig() (*Config, error) {
@@ -94,9 +107,9 @@ func LoadConfig() (*Config, error) {
 			SMTPPassword: os.Getenv("SMTP_PASSWORD"),
 		},
 		Google: GoogleOAuthConfig{
-			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+			ClientID: os.Getenv("GOOGLE_CLIENT_ID"),
 			// ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-			RedirectURL:  os.Getenv("GOOGLE_REDIRECT_URL"),
+			RedirectURL: os.Getenv("GOOGLE_REDIRECT_URL"),
 		},
 		Storage: StorageConfig{
 			Type:          os.Getenv("STORAGE_TYPE"),
@@ -108,6 +121,15 @@ func LoadConfig() (*Config, error) {
 			S3BucketName:  os.Getenv("S3_BUCKET_NAME"),
 			S3Region:      os.Getenv("S3_REGION"),
 			S3BaseURL:     os.Getenv("S3_BASE_URL"),
+		},
+		ChatBot: ChatBotConfig{
+			APIKey: os.Getenv("CHATBOT_API_KEY"),
+		},
+		Reloadly: ReloadlyConfig{
+			ClientID:     os.Getenv("RELOADLY_CLIENT_ID"),
+			ClientSecret: os.Getenv("RELOADLY_CLIENT_SECRET"),
+			GrantType:    os.Getenv("RELOADLY_GRANT_TYPE"),
+			Audience:     os.Getenv("RELOADLY_AUDIENCE"),
 		},
 	}, nil
 }
