@@ -25,3 +25,5 @@ go.work.sum
 .env
 
 docker-compose*
+
+internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json
