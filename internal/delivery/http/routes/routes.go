@@ -18,6 +18,8 @@ func SetupRoutes(
 	edivenceHandler *handler.UploadEvidenceHandler,
 	historyHandler *handler.HistoryHandler,
 	chatBotHandler *handler.ChatbotHandler,
+	rewardHandler *handler.RewardHandler,
+	fcmHandler *handler.FcmHandler,
 ) {
 	// Public routes
 	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
@@ -31,8 +33,6 @@ func SetupRoutes(
 
 	// cek education without middleware
 	router.HandleFunc("/api/educations", eduHandler.GetEducations).Methods("GET")
-	router.HandleFunc("/api/educations-pedonor", eduHandler.GetEducationsPendonor).Methods("GET")
-	router.HandleFunc("/api/educations-pencari-donor", eduHandler.GetEducationsPencariDonor).Methods("GET")
 	router.HandleFunc("/api/education", eduHandler.PostEducation).Methods("POST")
 	router.HandleFunc("/api/education", eduHandler.Update).Methods("PUT")
 	router.HandleFunc("/api/education", eduHandler.Delete).Methods("Delete")
@@ -51,6 +51,13 @@ func SetupRoutes(
 
 	// cek chatbot tanpa middleware
 	router.HandleFunc("/api/chatbot", chatBotHandler.HandleChat).Methods("POST")
+
+	// Reward tanpa middlewar
+	router.HandleFunc("/api/reward", rewardHandler.ClaimReward).Methods("POST")
+	router.HandleFunc("/api/reward/balance", rewardHandler.GetBalance).Methods("GET")
+
+	// Fcm tanpa middleware
+	router.HandleFunc("/api/fcm", fcmHandler.SendFCM).Methods("POST")
 
 	// Protected routes
 	protected := router.PathPrefix("/api").Subrouter()

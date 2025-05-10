@@ -11,11 +11,14 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*entity.User, error)
 	FindById(ctx context.Context, id uint) (*entity.User, error)
 	FindByGoogleID(ctx context.Context, googleID string) (*entity.User, error)
+	FindFcmTokenByEmail(ctx context.Context, email string) (string, error)
+	UpdateFcmTokenByEmail(ctx context.Context, email, fcmToken string) error
 	Update(ctx context.Context, user *entity.User) error
 	UpdatePassword(ctx context.Context, userID uint, hashedPassword string) error
 	UpdateProfilePhoto(ctx context.Context, userID uint, photoURL string) error
 	UpdateTotalDonation(ctx context.Context, userID uint, totalDonation int) error
 	UpdateCoin(ctx context.Context, userID uint, coin int) error
+	GetCoinByUserID(ctx context.Context, userID uint) (int, error)
 	// VerifyEmail(ctx context.Context, userID uint) error
 }
 
@@ -37,13 +40,17 @@ type EducationRepository interface {
 	Delete(ctx context.Context, id uint) error
 }
 
-type UploadEvidence interface {
+type UploadEvidenceRepository interface {
 	Upload(ctx context.Context, uploadEvidence *entity.UploadEvidence) error
 }
 
-type Histories interface {
+type HistoriesRepository interface {
 	Create(ctx context.Context, history *entity.History) error
 	GetByUserID(ctx context.Context, userID uint) ([]*entity.History, error)
 	NextDonation(ctx context.Context, userID uint) (date time.Time, err error)
 	LatestDonation(ctx context.Context, userID uint) (date time.Time, err error)
+}
+
+type RewardRepository interface {
+	GetPriceByAmount(ctx context.Context, amount int) (price int, err error)
 }

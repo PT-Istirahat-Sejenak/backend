@@ -9,11 +9,11 @@ import (
 )
 
 type historyUseCase struct {
-	historyRepo repository.Histories
+	historyRepo repository.HistoriesRepository
 	fileStorage storage.FileStorage
 }
 
-func NewHistoryUseCase(historyRepo repository.Histories, fileStorage storage.FileStorage) HistoryUseCase {
+func NewHistoryUseCase(historyRepo repository.HistoriesRepository, fileStorage storage.FileStorage) HistoryUseCase {
 	return &historyUseCase{
 		historyRepo: historyRepo,
 		fileStorage: fileStorage,

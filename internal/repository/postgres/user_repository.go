@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -20,8 +21,8 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 
 func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	query := `
-	INSERT INTO users (email, password, role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id, created_at, updated_at) 
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+	INSERT INTO users (email, password, role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id, fcm_token,created_at, updated_at) 
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
 	RETURNING id
 	`
 
@@ -51,8 +52,9 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 		user.BloodType,    // $10
 		user.Rhesus,       // $11
 		googleID,          // $12
-		user.CreatedAt,    // $13
-		user.UpdatedAt,    // $14
+		user.FCMToken,     // $13
+		user.CreatedAt,    // $14
+		user.UpdatedAt,    // $15
 	).Scan(&user.ID)
 
 	if err != nil {
@@ -65,7 +67,9 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 // FindById implements repository.UserRepository.
 func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, error) {
 	query := `
-	SELECT id, email, password, role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id,  created_at, updated_at	
+	SELECT id, email, password, role, name, date_of_birth, profile_photo,
+        phone_number, gender, address, blood_type, rhesus, google_id,
+		total_donation, coin, fcm_token, created_at, updated_at
 	FROM users
 	WHERE id = $1
 	`
@@ -87,6 +91,7 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, e
 		&user.GoogleID,
 		&user.TotalDonation,
 		&user.Coin,
+		&user.FCMToken,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -104,13 +109,21 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*entity.User, e
 // FindByEmail implements repository.UserRepository.
 func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity.User, error) {
 	query := `
-	SELECT id, email, password, role, name, date_of_birth, profile_photo, phone_number, gender, address, blood_type, rhesus, google_id, created_at, updated_at
-	FROM users
-	WHERE email = $1
-	`
+    SELECT 
+        id, email, password, role, name, date_of_birth, profile_photo,
+        phone_number, gender, address, blood_type, rhesus, google_id,
+		total_donation, coin, fcm_token, created_at, updated_at
+    FROM users
+    WHERE email = $1
+    LIMIT 1
+    `
 
 	user := &entity.User{}
-	var googleID sql.NullString
+	var (
+		profilePhoto sql.NullString
+		googleID     sql.NullString
+		fcmToken     sql.NullString
+	)
 
 	err := r.db.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
@@ -119,7 +132,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity
 		&user.Role,
 		&user.Name,
 		&user.DateOfBirth,
-		&user.ProfilePhoto,
+		&profilePhoto,
 		&user.PhoneNumber,
 		&user.Gender,
 		&user.Address,
@@ -128,22 +141,31 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity
 		&googleID,
 		&user.TotalDonation,
 		&user.Coin,
+		&fcmToken,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
+
+	// Set default values untuk field yang tidak di-select
+	// user.TotalDonation = 0
+	// user.Coin = 0
+
+	// Handle nullable fields
+	if profilePhoto.Valid {
+		user.ProfilePhoto = &profilePhoto.String
+	}
+	if googleID.Valid {
+		user.GoogleID = &googleID.String
+	}
+	if fcmToken.Valid {
+		user.FCMToken = &fcmToken.String
+	}
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
-		return nil, err
-	}
-
-	// Convert NullString ke pointer string
-	if googleID.Valid {
-		user.GoogleID = &googleID.String
-	} else {
-		user.GoogleID = nil
+		return nil, fmt.Errorf("error finding user by email: %w", err)
 	}
 
 	return user, nil
@@ -288,4 +310,41 @@ func (r *UserRepository) UpdateCoin(ctx context.Context, userID uint, coin int) 
 
 	_, err := r.db.ExecContext(ctx, query, coin, now, userID)
 	return err
+}
+
+func (r *UserRepository) FindFcmTokenByEmail(ctx context.Context, email string) (string, error) {
+	query := `
+		SELECT fcm_token
+		FROM users
+		WHERE email = $1
+	`
+
+	var fcmToken string
+	err := r.db.QueryRowContext(ctx, query, email).Scan(&fcmToken)
+	return fcmToken, err
+}
+
+func (r *UserRepository) UpdateFcmTokenByEmail(ctx context.Context, email, fcmToken string) error {
+	query := `
+		UPDATE users
+		SET fcm_token = $1, updated_at = $2
+		WHERE email = $3
+	`
+
+	now := time.Now()
+
+	_, err := r.db.ExecContext(ctx, query, fcmToken, now, email)
+	return err
+}
+
+func (r *UserRepository) GetCoinByUserID(ctx context.Context, userID uint) (int, error) {
+	var coin int
+	query := `
+		SELECT coin FROM users WHERE id = $1;
+	`
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(&coin)
+	if err != nil {
+		return 0, err
+	}
+	return coin, nil
 }

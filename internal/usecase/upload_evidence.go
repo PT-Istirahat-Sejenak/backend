@@ -8,12 +8,12 @@ import (
 )
 
 type uploadEvidenceUseCase struct {
-	uploadEvidenceRepo repository.UploadEvidence
+	uploadEvidenceRepo repository.UploadEvidenceRepository
 	fileStorage        storage.FileStorage
 }
 
 func NewUploadEvidenceUseCase(
-	uploadEvidenceRepo repository.UploadEvidence,
+	uploadEvidenceRepo repository.UploadEvidenceRepository,
 	fileStorage storage.FileStorage,
 ) EvidenceUseCase {
 	return &uploadEvidenceUseCase{

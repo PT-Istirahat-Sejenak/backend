@@ -9,10 +9,11 @@ import (
 )
 
 type AuthUseCase interface {
-	Register(ctx context.Context, email, password, role, name string, DateOfBirth time.Time, profilePhoto, phoneNumber, gender, address, bloodType, rhesus string) (*entity.User, error)
+	Register(ctx context.Context, email, password, role, name string, DateOfBirth time.Time, profilePhoto, phoneNumber, gender, address, bloodType, rhesus, fcmToken string) (*entity.User, string, error)
 	Login(ctx context.Context, email, password string) (string, error)
 	GoogleLogin(ctx context.Context, code string) (string, *entity.User, error)
 	GoogleLoginMobile(ctx context.Context, googleInfo oauth.GoogleUserInfo) (string, *entity.User, error)
+	ValidateFcmToken(ctx context.Context, userEmail, fcmToken string) error
 	// VerifyEmail(ctx context.Context, token string) error
 	RequestPasswordReset(ctx context.Context, email string) error
 	ResetPassword(ctx context.Context, token, newPassword string) error
@@ -52,7 +53,13 @@ type ChatbotUsecase interface {
 	GetReply(ctx context.Context, userID uint, message string) (string, error)
 }
 
-type TopUp interface {
-	MakeTopUp(ctx context.Context, operatorI, amount, number string) (res *entity.TopUpResponse, err error)
-	GetSaldo(ctx context.Context) (res int, err error)
+type RewardUseCase interface {
+	GetReward(ctx context.Context, userID uint, operatorID, amount, number string) (res string, err error)
+	GetBalance(ctx context.Context) (res float64, err error)
+	GetToken(ctx context.Context) (res *entity.TokenReward, err error)
+}
+
+type FCMUseCase interface {
+	GetAccessToken(ctx context.Context) (*entity.Fcm, error)
+	SendFCMV1(ctx context.Context, userID uint, title, body string) error
 }

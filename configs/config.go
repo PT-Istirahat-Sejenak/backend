@@ -16,7 +16,7 @@ type Config struct {
 	Google   GoogleOAuthConfig
 	Storage  StorageConfig
 	ChatBot  ChatBotConfig
-	Reloadly ReloadlyConfig
+	Reloadly Reward
 }
 
 type ServerConfig struct {
@@ -67,7 +67,7 @@ type StorageConfig struct {
 	S3BaseURL     string
 }
 
-type ReloadlyConfig struct {
+type Reward struct {
 	ClientID     string
 	ClientSecret string
 	GrantType    string
@@ -125,7 +125,7 @@ func LoadConfig() (*Config, error) {
 		ChatBot: ChatBotConfig{
 			APIKey: os.Getenv("CHATBOT_API_KEY"),
 		},
-		Reloadly: ReloadlyConfig{
+		Reloadly: Reward{
 			ClientID:     os.Getenv("RELOADLY_CLIENT_ID"),
 			ClientSecret: os.Getenv("RELOADLY_CLIENT_SECRET"),
 			GrantType:    os.Getenv("RELOADLY_GRANT_TYPE"),

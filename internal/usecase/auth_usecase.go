@@ -55,19 +55,19 @@ func (a *authUseCase) generateOTP(length int) (string, error) {
 }
 
 // Register implements AuhtUseCase.
-func (a *authUseCase) Register(ctx context.Context, email, password, role, name string, DateOfBirth time.Time, profilePhoto, phoneNumber, gender, address, bloodType, rhesus string) (*entity.User, error) {
+func (a *authUseCase) Register(ctx context.Context, email, password, role, name string, DateOfBirth time.Time, profilePhoto, phoneNumber, gender, address, bloodType, rhesus, fcmToken string) (*entity.User, string, error) {
 	existingUser, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return nil, "",err
 	}
 
 	if existingUser != nil {
-		return nil, errors.New("user with this email already exists")
+		return nil, "",errors.New("user with this email already exists")
 	}
 
 	hashedPassword, err := hash.HashPassword(password)
 	if err != nil {
-		return nil, err
+		return nil, "",err
 	}
 
 	user := &entity.User{
@@ -76,7 +76,7 @@ func (a *authUseCase) Register(ctx context.Context, email, password, role, name 
 		Name:         name,
 		Role:         role,
 		DateOfBirth:  DateOfBirth,
-		ProfilePhoto: profilePhoto,
+		ProfilePhoto: &profilePhoto,
 		PhoneNumber:  phoneNumber,
 		Gender:       gender,
 		Address:      address,
@@ -87,10 +87,15 @@ func (a *authUseCase) Register(ctx context.Context, email, password, role, name 
 
 	err = a.userRepo.Create(ctx, user)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return user, nil
+	token, err := a.jwtService.GenerateToken(user.ID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return user, token, nil
 }
 
 // Login implements AuhtUseCase.
@@ -152,7 +157,7 @@ func (a *authUseCase) GoogleLogin(ctx context.Context, code string) (string, *en
 			user = &entity.User{
 				Email:        googleUser.Email,
 				Name:         googleUser.Name,
-				ProfilePhoto: googleUser.Picture,
+				ProfilePhoto: &googleUser.Picture,
 				GoogleID:     &googleID,
 			}
 
@@ -209,7 +214,7 @@ func (a *authUseCase) GoogleLoginMobile(ctx context.Context, googleInfo oauth.Go
 			user = &entity.User{
 				Email:        googleInfo.Email,
 				Name:         googleInfo.Name,
-				ProfilePhoto: googleInfo.Picture,
+				ProfilePhoto: &googleInfo.Picture,
 				GoogleID:     &googleID,
 			}
 
@@ -370,4 +375,21 @@ func (a *authUseCase) Logout(ctx context.Context, userID uint, token string) err
 	}
 
 	return a.tokenRepo.Create(ctx, blacklistedToken)
+}
+
+// ValidateFcmToken implements AuthUseCase.
+func (a *authUseCase) ValidateFcmToken(ctx context.Context, userEmail, fcmToken string) error {
+	tokenDatabase, err := a.userRepo.FindFcmTokenByEmail(ctx, userEmail)
+	if err != nil {
+		return err
+	}
+
+	if tokenDatabase != fcmToken {
+		err := a.userRepo.UpdateFcmTokenByEmail(ctx, userEmail, fcmToken)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

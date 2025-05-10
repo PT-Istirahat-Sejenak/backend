@@ -342,7 +342,7 @@ func (h *HistoryHandler) GetLatestHistory(w http.ResponseWriter, r *http.Request
 // @Tags History
 // @Accept json
 // @Produce json
-// @Param user_id body uint true default(0) "User ID"
+// @Param user_id query uint true "User ID"
 // @Success 200 {object} time.Time "Next donation date"
 // @Failure 400 {object} map[string]string "Invalid user ID"
 // @Failure 500 {object} map[string]string "Internal Server Error"

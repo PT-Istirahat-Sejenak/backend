@@ -158,58 +158,6 @@ func (e *EducationHandler) GetEducations(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(edu)
 }
 
-// @Summary Get Education Pendonor
-// @Description Get Education Pendonor
-// @Tags Education
-// @Accept json
-// @Produce json
-// @Success 200 {object} EducationResponse
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/educations-pendonor [get]
-func (e *EducationHandler) GetEducationsPendonor(w http.ResponseWriter, r *http.Request) {
-	educations, err := e.educationUseCase.FindEducationPendonor(r.Context())
-	if err != nil {
-		http.Error(w, "Canot get education", http.StatusInternalServerError)
-		return
-	}
-
-	if educations == nil {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"message": "Education Is Empty"})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(educations)
-}
-
-// @Summary Get Education Pencari Donor
-// @Description Get Education Pencari Donor
-// @Tags Education
-// @Accept json
-// @Produce json
-// @Success 200 {object} EducationResponse
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Router /api/educations/pencari-donor [get]
-func (e *EducationHandler) GetEducationsPencariDonor(w http.ResponseWriter, r *http.Request) {
-	educations, err := e.educationUseCase.FindEducationPencariDonor(r.Context())
-	if err != nil {
-		http.Error(w, "Canot get education", http.StatusInternalServerError)
-		return
-	}
-
-	if educations == nil {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"message": "Education Is Empty"})
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(educations)
-}
-
 // @Summary Update education
 // @Description Update education
 // @Tags Education

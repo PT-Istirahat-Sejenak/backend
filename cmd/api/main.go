@@ -53,6 +53,7 @@ func main() {
 	educationRepo := postgres.NewEducationRepository(db)
 	uploadEvidenceRepo := postgres.NewUploadEvidenceRepository(db)
 	historyRepo := postgres.NewHistoryRepository(db)
+	rewardRepo := postgres.NewRewardRepository(db)
 
 	// Initialize services
 	jwtService := jwt.NewJWTService(config.JWT.Secret, config.JWT.ExpireTime)
@@ -101,6 +102,8 @@ func main() {
 	uploadEvidenceUseCase := usecase.NewUploadEvidenceUseCase(uploadEvidenceRepo, fileStorage)
 	historyUseCase := usecase.NewHistoryUseCase(historyRepo, fileStorage)
 	chatbotUseCase := usecase.NewChatbotUsecase(config.ChatBot)
+	rewardUseCase := usecase.NewRewardUseCase(config.Reloadly, userRepo, rewardRepo)
+	fcmUseCase := usecase.NewFcmUseCase(userRepo)
 
 	// Initialize HTTP handlers
 	authHandler := handler.NewAuthHandler(authUseCase, jwtService, googleOauth, fileStorage.(*storage.S3Storage))
@@ -110,10 +113,12 @@ func main() {
 	uploadEvidenceHandler := handler.NewUploadEvidenceHandler(uploadEvidenceUseCase, fileStorage.(*storage.S3Storage))
 	historyHandler := handler.NewHistoryHandler(historyUseCase, authUseCase, fileStorage.(*storage.S3Storage))
 	chatbotHandler := handler.NewChatbotHandler(chatbotUseCase)
+	rewardHanlder := handler.NewRewardHandler(rewardUseCase)
+	fcmHandler := handler.NewFcmHandler(fcmUseCase)
 
 	// Initialize router
 	router := mux.NewRouter()
-	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler, educationHandler, uploadEvidenceHandler, historyHandler, chatbotHandler)
+	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler, educationHandler, uploadEvidenceHandler, historyHandler, chatbotHandler, rewardHanlder, fcmHandler)
 
 	// Configure HTTP server
 	server := &http.Server{

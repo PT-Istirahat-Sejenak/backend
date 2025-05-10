@@ -43,11 +43,7 @@ BEGIN
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-    CREATE TYPE user_role AS ENUM ('user', 'admin');
-  END IF;
-
-  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'education_type') THEN
-    CREATE TYPE education_type AS ENUM ('pencari', 'pendonor');
+    CREATE TYPE user_role AS ENUM ('pendonor', 'pencari', 'admin');
   END IF;
 
   IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'gender') THEN
@@ -66,11 +62,12 @@ CREATE TABLE IF NOT EXISTS users (
     phone_number VARCHAR(20) NOT NULL,
     gender gender NOT NULL,
     address TEXT NOT NULL,
-    blood_type VARCHAR(5),
+    blood_type blood_type NOT NULL,
     rhesus rhesus,
     google_id VARCHAR(255),
 	total_donation INT DEFAULT 0,
 	coin INT DEFAULT 0,
+	fcm_token VARCHAR(255),
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL
 );
@@ -95,7 +92,6 @@ CREATE TABLE IF NOT EXISTS educations (
 	image VARCHAR(255),
 	title VARCHAR(255),
 	content TEXT,
-	type education_type,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -147,13 +143,21 @@ CREATE TABLE IF NOT EXISTS images (
 	FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS reward (
+CREATE TABLE IF NOT EXISTS rewards (
 	id SERIAL PRIMARY KEY,
-	amount INT NOT NULL,
+	amount INT NOT NULL UNIQUE,
 	price INT NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	)
+	);
+
+INSERT INTO rewards (amount, price) 
+VALUES 
+  (10000, 20), 
+  (20000, 30), 
+  (50000, 50), 
+  (100000, 75)
+ON CONFLICT (amount) DO NOTHING;
 `
 
 func InitDatabase(db *sql.DB) error {

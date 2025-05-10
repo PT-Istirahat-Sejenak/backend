@@ -465,88 +465,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/educations-pendonor": {
-            "get": {
-                "description": "Get Education Pendonor",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Education"
-                ],
-                "summary": "Get Education Pendonor",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.EducationResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/educations/pencari-donor": {
-            "get": {
-                "description": "Get Education Pencari Donor",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Education"
-                ],
-                "summary": "Get Education Pencari Donor",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/handler.EducationResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/api/history": {
             "get": {
                 "description": "Retrieves a list of history records for a given user ID.",
@@ -734,13 +652,11 @@ const docTemplate = `{
                 "summary": "Get next donation date",
                 "parameters": [
                     {
+                        "type": "integer",
                         "description": "User ID",
                         "name": "user_id",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
+                        "in": "query",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -834,6 +750,9 @@ const docTemplate = `{
                 "blood_type": {
                     "type": "string"
                 },
+                "coin": {
+                    "type": "integer"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -841,6 +760,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "email": {
+                    "type": "string"
+                },
+                "fcm_token": {
                     "type": "string"
                 },
                 "gender": {
@@ -863,6 +785,9 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                },
+                "total_donation": {
+                    "type": "integer"
                 },
                 "updated_at": {
                     "type": "string"
@@ -898,7 +823,7 @@ const docTemplate = `{
         "handler.GoogleLoginRequest": {
             "type": "object",
             "properties": {
-                "code": {
+                "token": {
                     "type": "string"
                 }
             }
@@ -933,6 +858,9 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "email": {
+                    "type": "string"
+                },
+                "fcm_token": {
                     "type": "string"
                 },
                 "password": {

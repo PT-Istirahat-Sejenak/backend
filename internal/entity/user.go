@@ -9,7 +9,7 @@ type User struct {
 	Role          string    `json:"role"`
 	Name          string    `json:"name"`
 	DateOfBirth   time.Time `json:"date_of_birth"`
-	ProfilePhoto  string    `json:"profile_photo"`
+	ProfilePhoto  *string    `json:"profile_photo"`
 	PhoneNumber   string    `json:"phone_number"`
 	Gender        string    `json:"gender"`
 	Address       string    `json:"address"`
@@ -18,6 +18,7 @@ type User struct {
 	GoogleID      *string   `json:"-"`
 	TotalDonation int       `json:"total_donation"`
 	Coin          int       `json:"coin"`
+	FCMToken      *string    `json:"fcm_token"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }

@@ -43,11 +43,18 @@ type RegisterRequest struct {
 	Address      string                `json:"address"`
 	BloodType    string                `json:"blood_type"`
 	Rhesus       string                `json:"rhesus"`
+	FCMToken     string                `json:"fcm_token"`
+}
+
+type RegisterResponse struct {
+	Token string       `json:"token"`
+	User  *entity.User `json:"user"`
 }
 
 type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	// FCMToken string `json:"fcm_token"`
 }
 
 type LoginResponse struct {
@@ -101,14 +108,14 @@ func isImageFile(contentType string) bool {
 // @Param name formData string true "Name" default(Fahrul)
 // @Param email formData string true "Email" default(example@example.com)
 // @Param password formData string true "Password" default(fahrul123)
-// @Param role formData string true "Role" default(patient)
+// @Param role formData string true "Role" default(pendonor)
 // @Param date_of_birth formData string true "Date of Birth" format(date-time) default(2000-01-02)
 // @Param phone_number formData string true "Phone Number" default(1234567890)
 // @Param profile_photo formData file false "Profile Photo"
 // @Param gender formData string true "Gender" default(male)
 // @Param address formData string true "Address" default(Jakarta)
 // @Param blood_type formData string false "Blood Type" default(AB)
-// @Param rhesus formData string false "Rhesus" default(+)
+// @Param rhesus formData string false "Rhesus" default(positive)
 // @Success 201 {object} entity.User
 // @Failure 400 {object} map[string]string
 // @Router /api/auth/register [post]
@@ -158,6 +165,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	address := r.FormValue("address")
 	bloodType := r.FormValue("blood_type")
 	rhesus := r.FormValue("rhesus")
+	fcmToken := r.FormValue("fcm_token")
 
 	birthDate, err := time.Parse("2006-01-02", dateOfBirth)
 
@@ -166,15 +174,21 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authUseCase.Register(r.Context(), email, password, role, name, birthDate, fileURL, phoneNumber, gender, address, bloodType, rhesus)
+	user, token, err := h.authUseCase.Register(r.Context(), email, password, role, name, birthDate, fileURL, phoneNumber, gender, address, bloodType, rhesus, fcmToken)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	response := RegisterResponse{
+		Token: token,
+		User:  user,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(response)
 }
 
 // @Summary Login a user
@@ -190,31 +204,42 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid request body"})
 		return
 	}
 
 	if req.Email == "" || req.Password == "" {
-		http.Error(w, "Email and password are required", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Email and password are required"})
 		return
 	}
 
 	token, err := h.authUseCase.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Internal Server Error"})
 		return
 	}
+
+	// err = h.authUseCase.ValidateFcmToken(r.Context(), req.Email, req.FCMToken)
+	// if err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
 
 	// Get user data
 	claims, err := h.jwtService.ValidateToken(token)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Internal Server Error"})
 		return
 	}
 
 	user, err := h.authUseCase.GetUserByID(r.Context(), claims.UserID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Internal Server Error"})
 		return
 	}
 
@@ -268,22 +293,22 @@ func (h *AuthHandler) GoogleLogin(w http.ResponseWriter, r *http.Request) {
 
 	var req GoogleLoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid request body"})
 		return
 	}
 
 	userGoogle, err := h.googleOauth.VerifyGoogleIDToken(r.Context(), req.Token)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Internal Server Error"})
 		return
 	}
 
 	token, user, err := h.authUseCase.GoogleLoginMobile(r.Context(), *userGoogle)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Internal Server Error"})
 		return
 	}
 
@@ -332,12 +357,14 @@ func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Reques
 	var req ResetPasswordRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Invalid request body"})
 		return
 	}
 
 	if req.Email == "" {
-		http.Error(w, "Email is required", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"message": "Email is required"})
 		return
 	}
 
