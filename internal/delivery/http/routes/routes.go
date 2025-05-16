@@ -89,4 +89,20 @@ func SetupRoutes(
 
 	// history routes
 	// protected.HandleFunc("/history", historyHandler.PostHistory).Methods("POST")
+	// protected.HandleFunc("/history", historyHandler.GetHistory).Methods("GET")
+	// protected.HandleFunc("/history/latest", historyHandler.GetLatestHistory).Methods("GET")
+	// protected.HandleFunc("/history/next", historyHandler.GetNextHistory).Methods("GET")
+
+	// chatbot routes
+	// protected.HandleFunc("/chatbot", chatBotHandler.HandleChat).Methods("POST")
+
+	// reward routes
+	// protected.HandleFunc("/reward", rewardHandler.ClaimReward).Methods("POST")
+	// protected.HandleFunc("/reward/balance", rewardHandler.GetBalance).Methods("GET")
+
+	// fcm routes
+	// protected.HandleFunc("/broadcast", fcmHandler.SendFCM).Methods("POST")
+
+	// message routes
+	// protected.HandleFunc("/message", websockerHandler.HandleConnection).Methods("GET")
 }

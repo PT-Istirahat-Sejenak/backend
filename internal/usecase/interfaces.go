@@ -68,8 +68,9 @@ type FCMUseCase interface {
 }
 
 type MessageUseCase interface {
-	SaveMessage(ctx context.Context, senderID, receiverID uint, content string) error
+	SaveMessage(ctx context.Context, senderID uint, receiverID uint, content string) error
+	GetMessagesByUserID(ctx context.Context, userID1 uint, userID2 uint, limit int, offset int) ([]entity.Message, error)
 	GetUndeliveredMessages(ctx context.Context, receiverID uint) ([]entity.Message, error)
 	MarkMessageAsDelivered(ctx context.Context, messageID uint) error
-	GetMessagesByUserID(ctx context.Context, userID1, userID2 uint, limit, offset int) ([]entity.Message, error)
+	GetLastMessage(ctx context.Context, senderID uint, receiverID uint) (*entity.Message, error)
 }

@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS messages (
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     content TEXT NOT NULL,
-    is_delivered BOOLEAN DEFAULT FALSE,
+    is_delivered BOOLEAN,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,

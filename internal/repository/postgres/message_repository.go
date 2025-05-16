@@ -142,3 +142,34 @@ func (r *MessageRepository) GetMessagesByUserID(ctx context.Context, userID1, us
 
 	return messages, nil
 }
+
+// Tambahkan method GetLastMessage pada MessageRepository
+func (r *MessageRepository) GetLastMessage(ctx context.Context, senderID, receiverID uint) (*entity.Message, error) {
+	query := `
+	SELECT id, sender_id, receiver_id, content, is_delivered, created_at, updated_at
+	FROM messages
+	WHERE sender_id = $1 AND receiver_id = $2
+	ORDER BY created_at DESC
+	LIMIT 1
+	`
+
+	var msg entity.Message
+	var isDelivered bool
+
+	err := r.db.QueryRowContext(ctx, query, senderID, receiverID).Scan(
+		&msg.ID,
+		&msg.SenderID,
+		&msg.ReceiverID,
+		&msg.Content,
+		&isDelivered,
+		&msg.CreatedAt,
+		&msg.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	msg.IsDelivered = isDelivered
+	return &msg, nil
+}

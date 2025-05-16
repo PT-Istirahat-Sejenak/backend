@@ -60,4 +60,5 @@ type MessageRepository interface {
 	GetUndeliveredMessages(ctx context.Context, receiverID uint) ([]entity.Message, error)
 	MarkMessageAsDelivered(ctx context.Context, messageID uint) error
 	GetMessagesByUserID(ctx context.Context, userID1, userID2 uint, limit, offset int) ([]entity.Message, error)
+	GetLastMessage(ctx context.Context, senderID, receiverID uint) (*entity.Message, error)
 }

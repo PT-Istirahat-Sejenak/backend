@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 
 	firebase "firebase.google.com/go/v4"
 	"golang.org/x/oauth2/google"
@@ -93,6 +94,11 @@ func (f *fcmUseCase) SendFCMV1(ctx context.Context, userID uint, bloodType, titl
 			"notification": map[string]string{
 				"title": title,
 				"body":  body,
+			},
+			"data": map[string]string{
+				"user_id":       strconv.FormatUint(uint64(userID), 10),
+				"profile_photo": *user.ProfilePhoto,
+				"name":          user.Name,
 			},
 		},
 	}

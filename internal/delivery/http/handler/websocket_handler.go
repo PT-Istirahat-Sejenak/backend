@@ -39,7 +39,6 @@ func NewWebSockerHandler(messageUseCase usecase.MessageUseCase) *WebSocketHandle
 }
 
 func (h *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Request) {
-	// Upgrade the HTTP connection to a WebSocket connection
 	ws, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Upgrade error:", err)
@@ -59,12 +58,12 @@ func (h *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Reque
 		ws.SetReadDeadline(time.Now().Add(60 * time.Second))
 		return nil
 	})
-	
+
 	// Wait for authentication message containing user ID
 	var authMsg struct {
 		UserID uint `json:"user_id"`
 	}
-	
+
 	if err := ws.ReadJSON(&authMsg); err != nil {
 		log.Println("Authentication error:", err)
 		ws.Close()
@@ -73,17 +72,17 @@ func (h *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Reque
 
 	userID := authMsg.UserID
 	log.Printf("User %d connected via WebSocket", userID)
-	
+
 	// Register this connection
 	h.registerConnection(ws, userID)
-	
+
 	// Send confirmation message
 	confirmMsg := map[string]interface{}{
 		"type":    "connected",
 		"user_id": userID,
 		"time":    time.Now(),
 	}
-	
+
 	if err := ws.WriteJSON(confirmMsg); err != nil {
 		log.Println("Failed to send confirmation:", err)
 		h.cleanupConnection(ws)
@@ -91,35 +90,92 @@ func (h *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Mengirim pesan yang belum terkirim ketika user sedang offline
+	go h.sendUndeliveredMessages(userID)
+
 	// Start ping-pong for connection health check
 	go h.pingConnection(ws)
-	
+
 	// Main message handling loop
 	for {
 		var msg entity.MessageRequest
 		err := ws.ReadJSON(&msg)
-		
+
 		if err != nil {
 			log.Printf("Read error for user %d: %v", userID, err)
 			h.cleanupConnection(ws)
 			ws.Close()
 			break
 		}
-		
+
 		// Validate the message has required fields
 		if msg.SenderID == 0 || msg.ReceiverID == 0 || msg.Content == "" {
 			log.Println("Invalid message format:", msg)
 			continue
 		}
-		
+
 		// Set created time if not provided
 		if msg.CreatedAt.IsZero() {
 			msg.CreatedAt = time.Now()
 		}
-		
+
 		// Send to broadcast channel for processing
 		h.broadcast <- msg
 		log.Printf("Message from %d to %d queued for delivery", msg.SenderID, msg.ReceiverID)
+	}
+}
+
+// Mengirim pesan-pesan yang belum terkirim ketika user offline
+func (h *WebSocketHandler) sendUndeliveredMessages(userID uint) {
+	ctx := context.Background()
+
+	// Get undelivered messages for this user
+	messages, err := h.messageUseCase.GetUndeliveredMessages(ctx, userID)
+	if err != nil {
+		log.Printf("Failed to get undelivered messages for user %d: %v", userID, err)
+		return
+	}
+
+	if len(messages) == 0 {
+		log.Printf("No undelivered messages for user %d", userID)
+		return
+	}
+
+	log.Printf("Found %d undelivered messages for user %d", len(messages), userID)
+
+	h.mutex.Lock()
+	conn, ok := h.connections[userID]
+	h.mutex.Unlock()
+
+	if !ok {
+		log.Printf("User %d connection not found", userID)
+		return
+	}
+
+	// Send each undelivered message
+	for _, msg := range messages {
+		messageReq := entity.MessageRequest{
+			SenderID:   msg.SenderID,
+			ReceiverID: msg.ReceiverID,
+			Content:    msg.Content,
+			CreatedAt:  msg.CreatedAt,
+		}
+
+		err := conn.WriteJSON(messageReq)
+		if err != nil {
+			log.Printf("Failed to send undelivered message to user %d: %v", userID, err)
+			break
+		}
+
+		// Mark message as delivered
+		// Note: Ideally, you would have a message ID in your entity.Message struct
+		// This is a simplified example
+		err = h.messageUseCase.MarkMessageAsDelivered(ctx, msg.ID)
+		if err != nil {
+			log.Printf("Failed to mark message as delivered: %v", err)
+		}
+
+		log.Printf("Sent undelivered message from %d to %d", msg.SenderID, userID)
 	}
 }
 
@@ -127,22 +183,22 @@ func (h *WebSocketHandler) HandleConnection(w http.ResponseWriter, r *http.Reque
 func (h *WebSocketHandler) registerConnection(ws *websocket.Conn, userID uint) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	
+
 	// If user already has a connection, close it
 	if oldConn, exists := h.connections[userID]; exists {
 		log.Printf("User %d already has a connection, closing old one", userID)
-		
+
 		// Remove from clients map
 		delete(h.clients, oldConn)
-		
+
 		// Close the connection
 		oldConn.Close()
 	}
-	
+
 	// Register new connection
 	h.clients[ws] = userID
 	h.connections[userID] = ws
-	
+
 	log.Printf("User %d registered with new connection", userID)
 }
 
@@ -150,17 +206,17 @@ func (h *WebSocketHandler) registerConnection(ws *websocket.Conn, userID uint) {
 func (h *WebSocketHandler) cleanupConnection(ws *websocket.Conn) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	
+
 	// Get the user ID for this connection
 	userID, exists := h.clients[ws]
 	if !exists {
 		log.Println("Connection not found in clients map")
 		return
 	}
-	
+
 	// Remove from maps
 	delete(h.clients, ws)
-	
+
 	// Only delete from connections if this is still the active connection for the user
 	if conn, ok := h.connections[userID]; ok && conn == ws {
 		delete(h.connections, userID)
@@ -172,7 +228,7 @@ func (h *WebSocketHandler) cleanupConnection(ws *websocket.Conn) {
 func (h *WebSocketHandler) pingConnection(ws *websocket.Conn) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:
@@ -186,56 +242,70 @@ func (h *WebSocketHandler) pingConnection(ws *websocket.Conn) {
 
 func (h *WebSocketHandler) HandleMessages() {
 	log.Println("Message handler started and waiting for messages...")
-	
+
 	for {
 		// Wait for a message from the broadcast channel
 		msg := <-h.broadcast
-		
+
 		// Save to database
 		ctx := context.Background()
 		err := h.messageUseCase.SaveMessage(ctx, msg.SenderID, msg.ReceiverID, msg.Content)
-		
+
 		if err != nil {
 			log.Printf("Failed to save message from %d to %d: %v", msg.SenderID, msg.ReceiverID, err)
 			continue
 		}
-		
+
 		log.Printf("Message from %d to %d saved to database", msg.SenderID, msg.ReceiverID)
-		
+
+		// Get the message ID that was just saved
+		// Kita perlu mendapatkan ID pesan yang baru disimpan
+		message, err := h.messageUseCase.GetLastMessage(ctx, msg.SenderID, msg.ReceiverID)
+		if err != nil {
+			log.Printf("Failed to get message ID: %v", err)
+			continue
+		}
+		messageID := message.ID
+
 		// Try to deliver message to recipient if online
 		h.mutex.Lock()
 		conn, recipientOnline := h.connections[msg.ReceiverID]
 		h.mutex.Unlock()
-		
+
 		if recipientOnline {
 			deliveryErr := conn.WriteJSON(msg)
-			
+
 			if deliveryErr != nil {
 				log.Printf("Failed to deliver message to user %d: %v", msg.ReceiverID, deliveryErr)
-				
+
 				// Clean up bad connection
 				h.mutex.Lock()
 				delete(h.clients, conn)
 				delete(h.connections, msg.ReceiverID)
 				h.mutex.Unlock()
-				
+
 				conn.Close()
 			} else {
 				log.Printf("Message delivered to user %d", msg.ReceiverID)
-				
+
+				// Mark the message as delivered in the database
+				if err := h.messageUseCase.MarkMessageAsDelivered(ctx, messageID); err != nil {
+					log.Printf("Failed to mark message as delivered: %v", err)
+				}
+
 				// Send delivery confirmation to sender
 				h.mutex.Lock()
 				senderConn, senderOnline := h.connections[msg.SenderID]
 				h.mutex.Unlock()
-				
+
 				if senderOnline {
 					confirmation := map[string]interface{}{
-						"type":        "delivery_confirmation",
+						"type":         "delivery_confirmation",
 						"message_time": msg.CreatedAt,
 						"recipient_id": msg.ReceiverID,
 						"delivered_at": time.Now(),
 					}
-					
+
 					if err := senderConn.WriteJSON(confirmation); err != nil {
 						log.Printf("Failed to send delivery confirmation to user %d: %v", msg.SenderID, err)
 					}

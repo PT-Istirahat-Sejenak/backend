@@ -40,3 +40,8 @@ func (m *messageUseCase) GetUndeliveredMessages(ctx context.Context, receiverID 
 func (m *messageUseCase) MarkMessageAsDelivered(ctx context.Context, messageID uint) error {
 	return m.messageRepo.MarkMessageAsDelivered(ctx, messageID)
 }
+
+// GetLastMessage gets the last message sent between two users
+func (m *messageUseCase) GetLastMessage(ctx context.Context, senderID uint, receiverID uint) (*entity.Message, error) {
+	return m.messageRepo.GetLastMessage(ctx, senderID, receiverID)
+}
