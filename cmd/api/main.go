@@ -54,6 +54,7 @@ func main() {
 	uploadEvidenceRepo := postgres.NewUploadEvidenceRepository(db)
 	historyRepo := postgres.NewHistoryRepository(db)
 	rewardRepo := postgres.NewRewardRepository(db)
+	messageRepo := postgres.NewMessageRepository(db)
 
 	// Initialize services
 	jwtService := jwt.NewJWTService(config.JWT.Secret, config.JWT.ExpireTime)
@@ -96,14 +97,15 @@ func main() {
 	}
 
 	// Initialize use cases
-	authUseCase := usecase.NewAuthUseCase(userRepo, tokenRepo, jwtService, emailService, googleOauth)
+	fcmUseCase := usecase.NewFcmUseCase(userRepo)
+	authUseCase := usecase.NewAuthUseCase(userRepo, tokenRepo, jwtService, fcmUseCase, emailService, googleOauth)
 	profileUseCase := usecase.NewProfileUseCase(userRepo, fileStorage)
 	educationUseCase := usecase.NewEducationUseCase(educationRepo, fileStorage)
 	uploadEvidenceUseCase := usecase.NewUploadEvidenceUseCase(uploadEvidenceRepo, fileStorage)
 	historyUseCase := usecase.NewHistoryUseCase(historyRepo, fileStorage)
 	chatbotUseCase := usecase.NewChatbotUsecase(config.ChatBot)
 	rewardUseCase := usecase.NewRewardUseCase(config.Reloadly, userRepo, rewardRepo)
-	fcmUseCase := usecase.NewFcmUseCase(userRepo)
+	messageUseCase := usecase.NewMessageUseCase(messageRepo)
 
 	// Initialize HTTP handlers
 	authHandler := handler.NewAuthHandler(authUseCase, jwtService, googleOauth, fileStorage.(*storage.S3Storage))
@@ -115,10 +117,13 @@ func main() {
 	chatbotHandler := handler.NewChatbotHandler(chatbotUseCase)
 	rewardHanlder := handler.NewRewardHandler(rewardUseCase)
 	fcmHandler := handler.NewFcmHandler(fcmUseCase)
+	messageHandler := handler.NewWebSockerHandler(messageUseCase)
+
+	go messageHandler.HandleMessages()
 
 	// Initialize router
 	router := mux.NewRouter()
-	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler, educationHandler, uploadEvidenceHandler, historyHandler, chatbotHandler, rewardHanlder, fcmHandler)
+	routes.SetupRoutes(router, authHandler, authMiddleware, profileHandler, educationHandler, uploadEvidenceHandler, historyHandler, chatbotHandler, rewardHanlder, fcmHandler, messageHandler)
 
 	// Configure HTTP server
 	server := &http.Server{

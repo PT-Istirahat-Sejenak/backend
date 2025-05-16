@@ -158,7 +158,7 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*entity
 		user.GoogleID = &googleID.String
 	}
 	if fcmToken.Valid {
-		user.FCMToken = &fcmToken.String
+		user.FCMToken = fcmToken.String
 	}
 
 	if err != nil {

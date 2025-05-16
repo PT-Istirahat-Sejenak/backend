@@ -28,7 +28,7 @@ func (h *ChatbotHandler) HandleChat(w http.ResponseWriter, r *http.Request) {
 	reply, err := h.Usecase.GetReply(r.Context(), uint(req.UserID), req.Message)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"message": "Internal Server Error"})
+		json.NewEncoder(w).Encode(map[string]string{"message": err.Error()})
 		return
 	}
 

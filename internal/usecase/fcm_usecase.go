@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 
+	firebase "firebase.google.com/go/v4"
 	"golang.org/x/oauth2/google"
 )
 
@@ -27,7 +28,7 @@ func NewFcmUseCase(userRepo repository.UserRepository) FCMUseCase {
 
 // GetAccessToken implements FCMUseCase.
 func (f *fcmUseCase) GetAccessToken(ctx context.Context) (*entity.Fcm, error) {
-	serviceAccountPath := "/home/fahrul/gdsc/gsc/backend/internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json"
+	serviceAccountPath := "internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json"
 	data, err := os.ReadFile(serviceAccountPath)
 	if err != nil {
 		return nil, err
@@ -38,7 +39,7 @@ func (f *fcmUseCase) GetAccessToken(ctx context.Context) (*entity.Fcm, error) {
 		return nil, err
 	}
 
-	token, err := conf.TokenSource(context.Background()).Token()
+	token, err := conf.TokenSource(ctx).Token()
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +64,7 @@ func (f *fcmUseCase) GetAccessToken(ctx context.Context) (*entity.Fcm, error) {
 }
 
 // SendFCMV1 implements FCMUseCase.
-func (f *fcmUseCase) SendFCMV1(ctx context.Context, userID uint, title, body string) error {
+func (f *fcmUseCase) SendFCMV1(ctx context.Context, userID uint, bloodType, title, body string) error {
 	data, err := f.GetAccessToken(ctx)
 	if err != nil {
 		return err
@@ -74,7 +75,7 @@ func (f *fcmUseCase) SendFCMV1(ctx context.Context, userID uint, title, body str
 		return err
 	}
 
-	if user.FCMToken == nil {
+	if user.FCMToken == "" {
 		err = errors.New("user fcm token not found")
 		return err
 	}
@@ -88,7 +89,7 @@ func (f *fcmUseCase) SendFCMV1(ctx context.Context, userID uint, title, body str
 
 	payload := map[string]interface{}{
 		"message": map[string]interface{}{
-			"token": user.FCMToken,
+			"topic": "blood_" + bloodType,
 			"notification": map[string]string{
 				"title": title,
 				"body":  body,
@@ -112,6 +113,37 @@ func (f *fcmUseCase) SendFCMV1(ctx context.Context, userID uint, title, body str
 	if res.StatusCode != 200 {
 		bodyBytes, _ := io.ReadAll(res.Body)
 		return fmt.Errorf("failed to send: %s", string(bodyBytes))
+	}
+
+	return nil
+}
+
+// func (f *fcmUseCase) SubscribeByBlood(ctx context.Context, fcmToken, bloodType string) error {
+// 	opt := option.WithCredentialsFile("/home/fahrul/gdsc/gsc/backend/internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json")
+
+// 	app, err := firebase.NewApp(ctx, nil, opt)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	err = SubscribeUserToBloodTopic(ctx, app, fcmToken, bloodType)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
+func (f *fcmUseCase) SubscribeUserToBloodTopic(ctx context.Context, app *firebase.App, fcmToken string, bloodType string) error {
+	client, err := app.Messaging(ctx)
+	if err != nil {
+		return err
+	}
+
+	topic := "blood_" + bloodType
+	_, err = client.SubscribeToTopic(ctx, []string{fcmToken}, topic)
+	if err != nil {
+		return err
 	}
 
 	return nil

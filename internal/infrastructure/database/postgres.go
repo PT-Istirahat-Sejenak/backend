@@ -62,8 +62,8 @@ CREATE TABLE IF NOT EXISTS users (
     phone_number VARCHAR(20) NOT NULL,
     gender gender NOT NULL,
     address TEXT NOT NULL,
-    blood_type blood_type NOT NULL,
-    rhesus rhesus,
+    blood_type VARCHAR(2),
+    rhesus VARCHAR(8),
     google_id VARCHAR(255),
 	total_donation INT DEFAULT 0,
 	coin INT DEFAULT 0,
@@ -97,15 +97,20 @@ CREATE TABLE IF NOT EXISTS educations (
 );
 
 CREATE TABLE IF NOT EXISTS messages (
-	id SERIAL PRIMARY KEY,
-	sender_id INT NOT NULL,
-	receiver_id INT NOT NULL,
-	message TEXT NOT NULL,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id SERIAL PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    content TEXT NOT NULL,
+    is_delivered BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-	FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+	FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+	FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_messages_sender_id ON messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver_id ON messages(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_messages_delivery_status ON messages(receiver_id, is_delivered);
 
 CREATE TABLE IF NOT EXISTS blood_requests (
 	id SERIAL PRIMARY KEY,

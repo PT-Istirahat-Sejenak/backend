@@ -20,6 +20,8 @@ func SetupRoutes(
 	chatBotHandler *handler.ChatbotHandler,
 	rewardHandler *handler.RewardHandler,
 	fcmHandler *handler.FcmHandler,
+	websockerHandler *handler.WebSocketHandler,
+
 ) {
 	// Public routes
 	router.HandleFunc("/api/auth/register", authHandler.Register).Methods("POST")
@@ -57,7 +59,10 @@ func SetupRoutes(
 	router.HandleFunc("/api/reward/balance", rewardHandler.GetBalance).Methods("GET")
 
 	// Fcm tanpa middleware
-	router.HandleFunc("/api/fcm", fcmHandler.SendFCM).Methods("POST")
+	router.HandleFunc("/api/broadcast", fcmHandler.SendFCM).Methods("POST")
+
+	// Message tanpa middleware
+	router.HandleFunc("/api/message", websockerHandler.HandleConnection)
 
 	// Protected routes
 	protected := router.PathPrefix("/api").Subrouter()

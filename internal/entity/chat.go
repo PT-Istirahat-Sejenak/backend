@@ -18,3 +18,4 @@ type ChatHistory struct {
 	UserID   uint
 	Messages []ChatMessage
 }
+

@@ -6,6 +6,8 @@ import (
 	"context"
 	"mime/multipart"
 	"time"
+
+	firebase "firebase.google.com/go/v4"
 )
 
 type AuthUseCase interface {
@@ -61,5 +63,13 @@ type RewardUseCase interface {
 
 type FCMUseCase interface {
 	GetAccessToken(ctx context.Context) (*entity.Fcm, error)
-	SendFCMV1(ctx context.Context, userID uint, title, body string) error
+	SendFCMV1(ctx context.Context, userID uint, bloodType, title, body string) error
+	SubscribeUserToBloodTopic(ctx context.Context, app *firebase.App, fcmToken string, bloodType string) error
+}
+
+type MessageUseCase interface {
+	SaveMessage(ctx context.Context, senderID, receiverID uint, content string) error
+	GetUndeliveredMessages(ctx context.Context, receiverID uint) ([]entity.Message, error)
+	MarkMessageAsDelivered(ctx context.Context, messageID uint) error
+	GetMessagesByUserID(ctx context.Context, userID1, userID2 uint, limit, offset int) ([]entity.Message, error)
 }

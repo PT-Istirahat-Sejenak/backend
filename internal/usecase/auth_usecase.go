@@ -14,11 +14,15 @@ import (
 	"log"
 	"math/big"
 	"time"
+
+	firebase "firebase.google.com/go/v4"
+	"google.golang.org/api/option"
 )
 
 type authUseCase struct {
 	userRepo     repository.UserRepository
 	tokenRepo    repository.TokenRepository
+	fcmUseCase   FCMUseCase
 	jwtService   *jwt.JWTService
 	emailService *email.EmailService
 	googleOauth  *oauth.GooogleOauth
@@ -28,6 +32,7 @@ func NewAuthUseCase(
 	userRepo repository.UserRepository,
 	tokenRepo repository.TokenRepository,
 	jwtService *jwt.JWTService,
+	fcmUseCase FCMUseCase,
 	emailService *email.EmailService,
 	googleOauth *oauth.GooogleOauth,
 ) AuthUseCase {
@@ -35,6 +40,7 @@ func NewAuthUseCase(
 		userRepo:     userRepo,
 		tokenRepo:    tokenRepo,
 		jwtService:   jwtService,
+		fcmUseCase:   fcmUseCase,
 		emailService: emailService,
 		googleOauth:  googleOauth,
 	}
@@ -58,16 +64,16 @@ func (a *authUseCase) generateOTP(length int) (string, error) {
 func (a *authUseCase) Register(ctx context.Context, email, password, role, name string, DateOfBirth time.Time, profilePhoto, phoneNumber, gender, address, bloodType, rhesus, fcmToken string) (*entity.User, string, error) {
 	existingUser, err := a.userRepo.FindByEmail(ctx, email)
 	if err != nil {
-		return nil, "",err
+		return nil, "", err
 	}
 
 	if existingUser != nil {
-		return nil, "",errors.New("user with this email already exists")
+		return nil, "", errors.New("user with this email already exists")
 	}
 
 	hashedPassword, err := hash.HashPassword(password)
 	if err != nil {
-		return nil, "",err
+		return nil, "", err
 	}
 
 	user := &entity.User{
@@ -83,6 +89,7 @@ func (a *authUseCase) Register(ctx context.Context, email, password, role, name 
 		BloodType:    bloodType,
 		Rhesus:       rhesus,
 		GoogleID:     nil,
+		FCMToken:     fcmToken,
 	}
 
 	err = a.userRepo.Create(ctx, user)
@@ -91,6 +98,18 @@ func (a *authUseCase) Register(ctx context.Context, email, password, role, name 
 	}
 
 	token, err := a.jwtService.GenerateToken(user.ID)
+	if err != nil {
+		return nil, "", err
+	}
+
+	opt := option.WithCredentialsFile("internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json")
+
+	app, err := firebase.NewApp(ctx, nil, opt)
+	if err != nil {
+		return nil, "", err
+	}
+
+	err = a.fcmUseCase.SubscribeUserToBloodTopic(ctx, app, fcmToken, bloodType)
 	if err != nil {
 		return nil, "", err
 	}

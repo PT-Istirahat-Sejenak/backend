@@ -29,12 +29,12 @@ func (f *FcmHandler) SendFCM(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = f.fcmUseCase.SendFCMV1(r.Context(), req.UserID, req.Title, req.Body)
+	err = f.fcmUseCase.SendFCMV1(r.Context(), req.UserID, req.BloodType, req.Title, req.Body)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Internal Server Error",
+			"error": err.Error(),
 		})
 		return
 	}

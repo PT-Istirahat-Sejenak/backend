@@ -54,3 +54,10 @@ type HistoriesRepository interface {
 type RewardRepository interface {
 	GetPriceByAmount(ctx context.Context, amount int) (price int, err error)
 }
+
+type MessageRepository interface {
+	SaveMessage(ctx context.Context, message *entity.Message) error
+	GetUndeliveredMessages(ctx context.Context, receiverID uint) ([]entity.Message, error)
+	MarkMessageAsDelivered(ctx context.Context, messageID uint) error
+	GetMessagesByUserID(ctx context.Context, userID1, userID2 uint, limit, offset int) ([]entity.Message, error)
+}

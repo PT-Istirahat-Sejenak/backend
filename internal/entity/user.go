@@ -18,7 +18,7 @@ type User struct {
 	GoogleID      *string   `json:"-"`
 	TotalDonation int       `json:"total_donation"`
 	Coin          int       `json:"coin"`
-	FCMToken      *string    `json:"fcm_token"`
+	FCMToken      string    `json:"fcm_token"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }

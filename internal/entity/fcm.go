@@ -6,7 +6,8 @@ type Fcm struct {
 }
 
 type RequestFcm struct {
-	UserID uint   `json:"user_id"`
-	Title  string `json:"title"`
-	Body   string `json:"body"`
+	UserID    uint   `json:"user_id"`
+	BloodType string `json:"blood_type"`
+	Title     string `json:"title"`
+	Body      string `json:"body"`
 }

@@ -10,6 +10,8 @@ RUN go mod download
 # Salin kode sumber
 COPY . .
 
+COPY internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json
+
 # Build aplikasi
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
 
@@ -23,6 +25,8 @@ WORKDIR /root/
 
 # Salin binary dari build stage
 COPY --from=builder /app/main .
+
+COPY --from=builder /app/internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json internal/infrastructure/broadcast/donora-f67f2-5c889d5acd0a.json
 
 # Expose port (sesuaikan dengan kebutuhan aplikasi Anda)
 EXPOSE 8080
